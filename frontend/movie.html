@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Film — CineVault</title>
+<meta name="description" content="Showtimes, synopsis and seat booking.">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#09090f">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+</head>
+<body data-page="movie">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<script src="js/layout.js"></script>
+
+<main id="main" class="wrap pagetop">
+
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="index.html">Home</a>
+    <svg><use href="#i-arrow"/></svg>
+    <a href="movies.html">Movies</a>
+    <svg><use href="#i-arrow"/></svg>
+    <span id="crumbNow">Loading…</span>
+  </nav>
+
+  <article class="detail" id="detail" hidden>
+    <div class="detail__poster" id="detailPoster"></div>
+
+    <div class="detail__body">
+      <div class="hero__pills" id="detailPills"></div>
+
+      <h1 id="detailTitle"></h1>
+
+      <div class="hero__meta" id="detailMeta"></div>
+
+      <p class="detail__syn" id="detailSyn"></p>
+
+      <p class="detail__acts">
+        <a class="btn btn--ghost btn--sm" id="detailTrailer" target="_blank" rel="noopener" hidden>
+          <svg><use href="#i-play"/></svg>Watch trailer
+        </a>
+      </p>
+
+      <dl class="facts" id="detailFacts"></dl>
+
+      <div class="sec-head">
+        <div>
+          <p class="eyebrow">Choose a screening</p>
+          <h2 class="h2">Showtimes</h2>
+        </div>
+      </div>
+
+      <div class="dates" id="detailDates" role="tablist" aria-label="Choose a date"></div>
+
+      <div id="detailVenues"></div>
+    </div>
+  </article>
+
+  <div class="empty" id="detailEmpty">
+    <svg><use href="#i-film"/></svg>
+    <p id="detailEmptyMsg">Loading…</p>
+    <p><a href="movies.html" style="color:var(--accent)">Browse what&rsquo;s on</a></p>
+  </div>
+
+</main>
+
+<script src="js/main.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/movie.js"></script>
+</body>
+</html>

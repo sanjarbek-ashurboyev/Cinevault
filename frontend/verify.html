@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verify your email — CineVault</title>
+<meta name="description" content="Enter the six-digit code to activate booking on your account.">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#09090f">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+</head>
+<body data-page="verify">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<script src="js/layout.js"></script>
+
+<main id="main" class="auth">
+  <div class="auth__box" id="verifyCard">
+
+    <h1>Verify your email</h1>
+    <p>Booking is locked until your address is confirmed. Enter the six-digit code we sent you.</p>
+
+    <form id="verifyForm" novalidate>
+
+      <div class="field">
+        <label for="v-email">Email</label>
+        <input type="email" id="v-email" name="email" autocomplete="email" placeholder="you@example.com" required>
+      </div>
+
+      <div class="field">
+        <label for="v-code">Verification code</label>
+        <input type="text" id="v-code" name="code" inputmode="numeric" autocomplete="one-time-code"
+               placeholder="123456" maxlength="6" required>
+        <span class="field__hint">Six digits, valid for a few minutes.</span>
+      </div>
+
+      <p class="msg" id="verifyError" hidden></p>
+
+      <button class="btn btn--accent btn--lg btn--full" type="submit" id="verifyGo">
+        <svg><use href="#i-check"/></svg><span id="verifyGoLabel">Verify email</span>
+      </button>
+    </form>
+
+    <p class="auth__alt">
+      Didn&rsquo;t get one, or has it stopped working?
+      <button type="button" class="linkish" id="resendBtn">Resend code</button>
+    </p>
+
+  </div>
+
+  <div class="auth__box" id="verifyDone" hidden>
+    <div class="done__tick"><svg><use href="#i-check"/></svg></div>
+    <h1>Email verified</h1>
+    <p id="verifyDoneMsg">Your account can book seats now.</p>
+    <a class="btn btn--accent btn--lg btn--full" id="verifyDoneLink" href="signin.html">Sign in</a>
+  </div>
+</main>
+
+<script src="js/main.js"></script>
+<script src="js/verify.js"></script>
+</body>
+</html>

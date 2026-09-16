@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Booking confirmed — CineVault</title>
+<meta name="description" content="Your reservation details.">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#09090f">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+</head>
+<body data-page="confirmation">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<script src="js/layout.js"></script>
+
+<main id="main" class="wrap">
+  <section class="done">
+
+    <div class="done__tick"><svg><use href="#i-check"/></svg></div>
+
+    <h1 id="doneTitle">You&rsquo;re booked</h1>
+    <p id="doneSub">&nbsp;</p>
+
+    <article class="ticket" id="ticket">
+      <div class="ticket__top">
+        <h2 id="tFilm">—</h2>
+        <p id="tSub">—</p>
+      </div>
+
+      <dl class="ticket__grid">
+        <div class="ticket__cell"><dt>Date</dt><dd id="tDate">—</dd></div>
+        <div class="ticket__cell"><dt>Showtime</dt><dd id="tTime">—</dd></div>
+        <div class="ticket__cell"><dt>Seats</dt><dd id="tSeats">—</dd></div>
+        <div class="ticket__cell"><dt>Total paid</dt><dd id="tTotal">—</dd></div>
+      </dl>
+
+      <div class="ticket__code">
+        <div>
+          <small>Booking reference</small>
+          <b id="tRef">—</b>
+        </div>
+      </div>
+
+      <p class="ticket__note" id="tNote"></p>
+    </article>
+
+    <div class="done__acts">
+      <button class="btn btn--accent" id="printBtn"><svg><use href="#i-print"/></svg>Print</button>
+      <button class="btn btn--ghost" id="saveBtn"><svg><use href="#i-download"/></svg>Save as file</button>
+      <a class="btn btn--ghost" href="movies.html" id="againBtn"><svg><use href="#i-film"/></svg>Book another</a>
+    </div>
+
+    <div class="empty" id="noBooking">
+      <svg><use href="#i-ticket"/></svg>
+      <p>There&rsquo;s no booking in this session yet. <a href="movies.html" style="color:var(--accent)">Pick a film</a> to get started.</p>
+    </div>
+
+  </section>
+</main>
+
+<script src="js/main.js"></script>
+<script src="js/catalogue.js"></script>
+<script src="js/confirmation.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<footer class="foot">
+  <div class="wrap foot__in">
+    <div class="foot__brand">
+      <a href="{% url 'home' %}" class="logo">CINE<span>VAULT</span></a>
+      <p>Book tickets across 240+ cinemas in 38 cities. Compare showtimes, choose your seat, and pay in seconds.</p>
+      <div class="foot__soc">
+        <a href="#" aria-label="Facebook"><svg><use href="#i-fb"/></svg></a>
+        <a href="#" aria-label="X"><svg><use href="#i-x"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg><use href="#i-ig"/></svg></a>
+        <a href="#" aria-label="YouTube"><svg><use href="#i-yt"/></svg></a>
+      </div>
+    </div>
+    <div class="foot__col">
+      <h4>Browse</h4>
+      <a href="{% url 'movies' %}">Now Showing</a><a href="{% url 'movies' %}?tab=soon">Coming Soon</a>
+      <a href="{% url 'movies' %}?sort=rating">Top Rated</a><a href="{% url 'movies' %}">By Genre</a>
+    </div>
+    <div class="foot__col">
+      <h4>Cinemas</h4>
+      <a href="{% url 'cinemas' %}">Find a cinema</a><a href="{% url 'cinemas' %}?fmt=imax">IMAX venues</a>
+      <a href="{% url 'cinemas' %}?fmt=4dx">4DX venues</a><a href="{% url 'cinemas' %}">Private hire</a>
+    </div>
+    <div class="foot__col">
+      <h4>Support</h4>
+      <a href="#">My bookings</a><a href="#">Refunds</a>
+      <a href="#">Gift cards</a><a href="#">Contact us</a>
+    </div>
+  </div>
+  <div class="foot__bar">
+    <div class="wrap foot__bar-in">
+      <p>© 2026 CineVault. Demo project — design adapted from the CineVault template.</p>
+      <p class="foot__legal"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Accessibility</a></p>
+    </div>
+  </div>
+</footer>

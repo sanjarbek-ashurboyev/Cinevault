@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What&rsquo;s On — CineVault</title>
+<meta name="description" content="Every film with a screening scheduled, plus everything still to come.">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#09090f">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+</head>
+<body data-page="movies">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<script src="js/layout.js"></script>
+
+<main id="main">
+
+<header class="phead">
+  <div class="wrap">
+    <nav class="crumb" aria-label="Breadcrumb">
+      <a href="index.html">Home</a>
+      <svg><use href="#i-arrow"/></svg>
+      <span>Movies</span>
+    </nav>
+    <h1>What&rsquo;s On</h1>
+    <p>Every film with a screening scheduled, plus the ones still waiting for a date. Pick a showtime to jump straight to seat selection.</p>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+
+    <div class="segs" id="tabs" role="tablist" aria-label="Release status">
+      <button class="seg is-on" type="button" role="tab" aria-selected="true"  data-tab="showing">Now Showing</button>
+      <button class="seg"       type="button" role="tab" aria-selected="false" data-tab="soon">Coming Soon</button>
+    </div>
+
+    <div class="dates" id="dates" role="tablist" aria-label="Choose date"></div>
+
+    <div class="chips" id="genreFilter"></div>
+
+    <div class="toolbar">
+      <p class="toolbar__count" id="count">&nbsp;</p>
+      <label class="sortsel">
+        <svg><use href="#i-sort"/></svg>
+        <select id="sort" aria-label="Sort films">
+          <option value="soonest">Next screening</option>
+          <option value="rating">Highest rated</option>
+          <option value="az">Title A – Z</option>
+          <option value="price">Lowest price</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="grid grid--movies" id="grid"></div>
+
+    <div class="empty" id="empty">
+      <svg><use href="#i-film"/></svg>
+      <p id="emptyMsg"></p>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+<script src="js/main.js"></script>
+<script src="js/catalogue.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/movies.js"></script>
+</body>
+</html>

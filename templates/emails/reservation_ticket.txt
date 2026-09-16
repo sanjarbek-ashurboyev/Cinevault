@@ -1,0 +1,24 @@
+{% autoescape off %}CINEVAULT — YOUR TICKET
+
+Booking reference: #{{ reservation.id }}
+
+{{ movie.title }}
+{{ hall.name }}
+{{ start_date }} at {{ start_time }} ({{ timezone }})
+
+Seats:      {{ seat_labels }}
+Tickets:    {{ seat_count }}
+Total paid: {{ total_price }}
+
+──────────────────────────────────────────────
+SHOW THIS EMAIL AT THE DOOR
+Quote booking reference #{{ reservation.id }}.
+──────────────────────────────────────────────
+
+Please arrive ten minutes before the start time. Your seats are
+held for the whole screening — nobody else can book them.
+
+Booked by {{ full_name }} ({{ email }}).
+
+This is an automated confirmation; there is no need to reply.
+{% endautoescape %}

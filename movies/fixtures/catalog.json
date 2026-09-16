@@ -1,0 +1,361 @@
+[
+  {
+    "title": "Spider-Man: Brand New Day",
+    "description": "Fighting crime full-time as Spider-Man in a world that doesn't remember him—and the pressure of seeing his old friends move on without him—sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat to the city and those he loves - a powerful villain no one can even see.",
+    "tagline": "A brand new day starts now.",
+    "poster_file": "spider-man-brand-new-day.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=62bIsvRcPv0",
+    "duration_minutes": 145,
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "release_date": "2026-08-06",
+    "age_rating": "PG-13",
+    "rating": 7.9,
+    "tier": "A",
+    "tmdb": "/movie/969681-spider-man-brand-new-day",
+    "backdrop_file": "spider-man-brand-new-day-backdrop.jpg"
+  },
+  {
+    "title": "The Odyssey",
+    "description": "Odysseus, the legendary King of Ithaca, embarks on a long and perilous journey home following the Trojan War. Throughout his voyage, he is forced to confront the whims of gods, mythological monsters, and trials that stretch both his cunning and his humanity to the breaking point.",
+    "tagline": "Defy the gods.",
+    "poster_file": "the-odyssey.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=f_bKjZeJBBI",
+    "duration_minutes": 173,
+    "genres": [
+      "Adventure",
+      "Action",
+      "Fantasy"
+    ],
+    "release_date": "2026-07-23",
+    "age_rating": "R",
+    "rating": 8.0,
+    "tier": "A",
+    "tmdb": "/movie/1368337-the-odyssey",
+    "backdrop_file": "the-odyssey-backdrop.jpg"
+  },
+  {
+    "title": "Backrooms",
+    "description": "A strange doorway appears in the basement of a furniture showroom.",
+    "tagline": "See how far it goes.",
+    "poster_file": "backrooms.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=0HjdiohVOik",
+    "duration_minutes": 111,
+    "genres": [
+      "Horror",
+      "Mystery",
+      "Science Fiction"
+    ],
+    "release_date": "2026-06-04",
+    "age_rating": "R",
+    "rating": 7.1,
+    "tier": "B",
+    "tmdb": "/movie/1083381-backrooms",
+    "backdrop_file": "backrooms-backdrop.jpg"
+  },
+  {
+    "title": "By Any Means",
+    "description": "In 1960s Mississippi, young Black FBI agent Wayne Strider is sent to investigate a wave of brutal killings targeting civil rights leaders. Forced to work alongside notorious mafia hitman Greg Scarpa, Strider finds himself pulled into a deadly hunt where the lines of justice and vengeance begin to blur.",
+    "tagline": "The FBI couldn't crack it. So they called in the mob.",
+    "poster_file": "by-any-means.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=ej8pjisr0Pc",
+    "duration_minutes": 107,
+    "genres": [
+      "History",
+      "Crime",
+      "Drama"
+    ],
+    "release_date": "2026-09-04",
+    "age_rating": "R",
+    "rating": 8.1,
+    "tier": "B",
+    "tmdb": "/movie/1380417-by-any-means",
+    "backdrop_file": "by-any-means-backdrop.jpg"
+  },
+  {
+    "title": "Fall 2: Deadpoint",
+    "description": "On a perilous climb across Thailand's Mount Kwan, two climbers become trapped thousands of feet above the ground, where vertigo-inducing heights, sheer exposure, and impossible odds turn every moment into a fight for survival.",
+    "tagline": "Are you down?",
+    "poster_file": "fall-2-deadpoint.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=Krs0VDIjhmE",
+    "duration_minutes": 98,
+    "genres": [
+      "Thriller"
+    ],
+    "release_date": "2026-09-02",
+    "age_rating": "PG-13",
+    "rating": 6.7,
+    "tier": "B",
+    "tmdb": "/movie/1101412-fall-2-deadpoint",
+    "backdrop_file": "fall-2-deadpoint-backdrop.jpg"
+  },
+  {
+    "title": "Mayday",
+    "description": "When a U.S. Navy pilot on a top-secret mission during the Cold War gets trapped behind enemy lines, his only chance at survival is to form an alliance with an eccentric ex-KGB agent.",
+    "tagline": "A friendship with major red flags.",
+    "poster_file": "mayday.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=om5Un9X720M",
+    "duration_minutes": 111,
+    "genres": [
+      "Action",
+      "Comedy"
+    ],
+    "release_date": "2026-09-03",
+    "age_rating": "PG-13",
+    "rating": 7.9,
+    "tier": "B",
+    "tmdb": "/movie/1137844-mayday",
+    "backdrop_file": "mayday-backdrop.jpg"
+  },
+  {
+    "title": "Minions & Monsters",
+    "description": "This is the rambunctious, ridiculous and totally true story of how the Minions conquered Hollywood, became movie stars, lost everything, unleashed monsters onto the world and then banded together to try and save the planet from the mayhem they had just created.",
+    "tagline": "Hollywood has a monster problem.",
+    "poster_file": "minions-monsters.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=ZSdOwt-G49w",
+    "duration_minutes": 90,
+    "genres": [
+      "Adventure",
+      "Animation",
+      "Comedy",
+      "Family",
+      "Fantasy"
+    ],
+    "release_date": "2026-07-01",
+    "age_rating": "PG",
+    "rating": 7.6,
+    "tier": "B",
+    "tmdb": "/movie/1315772-minions-monsters",
+    "backdrop_file": "minions-monsters-backdrop.jpg"
+  },
+  {
+    "title": "Onslaught",
+    "description": "When a rogue squad of genetically engineered super soldiers break loose in the desert, a badass Army sniper must unleash hell to protect her young daughter.",
+    "tagline": "They unleashed their deadliest weapon on us.",
+    "poster_file": "onslaught.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=AMLCbpM1fRQ",
+    "duration_minutes": 92,
+    "genres": [
+      "Action",
+      "Thriller",
+      "Horror"
+    ],
+    "release_date": "2026-09-04",
+    "age_rating": "R",
+    "rating": 6.4,
+    "tier": "B",
+    "tmdb": "/movie/1284046-onslaught",
+    "backdrop_file": "onslaught-backdrop.jpg"
+  },
+  {
+    "title": "Toy Story 5",
+    "description": "When Bonnie receives a Lilypad tablet as a gift and becomes obsessed, Buzz, Woody, Jessie and the rest of the gang's jobs become exponentially harder when they have to go head to head with the all-new threat to playtime.",
+    "tagline": "It's on.",
+    "poster_file": "toy-story-5.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=c51ND9Hdbw0",
+    "duration_minutes": 102,
+    "genres": [
+      "Animation",
+      "Family",
+      "Comedy",
+      "Adventure"
+    ],
+    "release_date": "2026-06-19",
+    "age_rating": "PG",
+    "rating": 8.3,
+    "tier": "B",
+    "tmdb": "/movie/1084244-toy-story-5",
+    "backdrop_file": "toy-story-5-backdrop.jpg"
+  },
+  {
+    "title": "Michael",
+    "description": "The story of Michael Jackson, one of the most influential artists the world has ever known, and his life beyond the music. His journey from the discovery of his extraordinary talent as the lead of the Jackson Five, to the visionary artist whose creative ambition fueled a relentless pursuit to become the biggest entertainer in the world, highlighting both his life off-stage and some of the most iconic performances from his early solo career.",
+    "tagline": "Discover the making of a king.",
+    "poster_file": "michael.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=mbtgEE6rkxw",
+    "duration_minutes": 128,
+    "genres": [
+      "Music",
+      "Drama"
+    ],
+    "release_date": "2026-04-24",
+    "age_rating": "PG-13",
+    "rating": 8.6,
+    "tier": "C",
+    "tmdb": "/movie/936075-michael",
+    "backdrop_file": "michael-backdrop.jpg"
+  },
+  {
+    "title": "Project Hail Mary",
+    "description": "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction.",
+    "tagline": "Believe in the Hail Mary.",
+    "poster_file": "project-hail-mary.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=m08TxIsFTRI",
+    "duration_minutes": 157,
+    "genres": [
+      "Science Fiction",
+      "Adventure"
+    ],
+    "release_date": "2026-03-20",
+    "age_rating": "PG-13",
+    "rating": 8.6,
+    "tier": "C",
+    "tmdb": "/movie/687163-project-hail-mary",
+    "backdrop_file": "project-hail-mary-backdrop.jpg"
+  },
+  {
+    "title": "The Devil Wears Prada 2",
+    "description": "Andy Sachs returns to Runway as Miranda Priestly navigates a new media landscape and Runway's position within. The duo reconnect with former assistant Emily Charlton, now the head of a luxury brand that possesses funding which could ensure Runway's survival.",
+    "tagline": "Icons reign forever.",
+    "poster_file": "the-devil-wears-prada-2.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=e9HXmMnUEdE",
+    "duration_minutes": 119,
+    "genres": [
+      "Comedy",
+      "Drama"
+    ],
+    "release_date": "2026-05-01",
+    "age_rating": "PG-13",
+    "rating": 7.0,
+    "tier": "C",
+    "tmdb": "/movie/1314481-the-devil-wears-prada-2",
+    "backdrop_file": "the-devil-wears-prada-2-backdrop.jpg"
+  },
+  {
+    "title": "The Mandalorian and Grogu",
+    "description": "The evil Empire has fallen, and Imperial warlords remain scattered throughout the galaxy. As the fledgling New Republic works to protect everything the Rebellion fought for, they have enlisted the help of legendary Mandalorian bounty hunter Din Djarin and his young apprentice Grogu.",
+    "tagline": "If you're searching for new adventure, \"this is the way.\"",
+    "poster_file": "the-mandalorian-and-grogu.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=IHWlvwu8t1w",
+    "duration_minutes": 132,
+    "genres": [
+      "Action",
+      "Adventure",
+      "Science Fiction"
+    ],
+    "release_date": "2026-05-22",
+    "age_rating": "PG-13",
+    "rating": 7.5,
+    "tier": "C",
+    "tmdb": "/movie/1228710-the-mandalorian-and-grogu",
+    "backdrop_file": "the-mandalorian-and-grogu-backdrop.jpg"
+  },
+  {
+    "title": "The Super Mario Galaxy Movie",
+    "description": "Having thwarted Bowser's previous plot to marry Princess Peach, Mario and Luigi now face a fresh threat in Bowser Jr., who is determined to liberate his father from captivity and restore the family legacy. Alongside companions new and old, the brothers travel across the stars to stop the young heir's crusade.",
+    "tagline": "The galaxy awaits.",
+    "poster_file": "the-super-mario-galaxy-movie.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=GuCejewteF8",
+    "duration_minutes": 98,
+    "genres": [
+      "Family",
+      "Comedy",
+      "Adventure",
+      "Fantasy",
+      "Animation"
+    ],
+    "release_date": "2026-04-01",
+    "age_rating": "PG",
+    "rating": 8.2,
+    "tier": "C",
+    "tmdb": "/movie/1226863-the-super-mario-galaxy-movie",
+    "backdrop_file": "the-super-mario-galaxy-movie-backdrop.jpg"
+  },
+  {
+    "title": "Avengers: Doomsday",
+    "description": "Beloved heroes from three distinct universes are set on a deadly collision course and face an existential threat unlike anything they've ever encountered.",
+    "tagline": "",
+    "poster_file": "avengers-doomsday.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=irVNGjRFZGk",
+    "duration_minutes": 165,
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "release_date": "2026-12-18",
+    "age_rating": "PG-13",
+    "rating": null,
+    "tier": "soon",
+    "tmdb": "/movie/1003596-avengers-doomsday",
+    "backdrop_file": "avengers-doomsday-backdrop.jpg"
+  },
+  {
+    "title": "Dune: Part Three",
+    "description": "Emperor Paul Atreides faces the fallout from his ascent to power as political plots and a galaxy-wide holy war endanger the future only he can see.",
+    "tagline": "The epic conclusion.",
+    "poster_file": "dune-part-three.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=NdvqHc56lE0",
+    "duration_minutes": 140,
+    "genres": [
+      "Science Fiction",
+      "Adventure"
+    ],
+    "release_date": "2026-12-18",
+    "age_rating": "PG-13",
+    "rating": null,
+    "tier": "soon",
+    "tmdb": "/movie/1170608-dune-part-three",
+    "backdrop_file": "dune-part-three-backdrop.jpg"
+  },
+  {
+    "title": "The Cat in the Hat",
+    "description": "Doing what he does best, the Cat spreads joy to kids in his hilarious, signature, and singularly irreverent way, transporting them and audiences on a fantastical journey through a world they've never seen before. Our hero takes on his toughest assignment yet for the I.I.I.I. (Institute for the Institution of Imagination and Inspiration, LLC) to cheer up Gabby and Sebastian, a pair of siblings struggling to move to a new town. Known for taking things too far, this could be this agent of chaos' last chance to prove himself...or lose his magical hat!",
+    "tagline": "The cat's out of the bag.",
+    "poster_file": "the-cat-in-the-hat.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=jz8pLlPhSeY",
+    "duration_minutes": 91,
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Adventure",
+      "Fantasy",
+      "Family"
+    ],
+    "release_date": "2026-11-06",
+    "age_rating": "PG",
+    "rating": null,
+    "tier": "soon",
+    "tmdb": "/movie/1117898-the-cat-in-the-hat",
+    "backdrop_file": "the-cat-in-the-hat-backdrop.jpg"
+  },
+  {
+    "title": "The Social Reckoning",
+    "description": "Frances Haugen, a young Facebook engineer, enlists the help of Jeff Horwitz, a Wall Street Journal reporter, to go on a dangerous journey that ends up blowing the whistle on the social network's most guarded secrets.",
+    "tagline": "We're way past making friends.",
+    "poster_file": "the-social-reckoning.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=gM4LkaXwGuY",
+    "duration_minutes": 112,
+    "genres": [
+      "Drama",
+      "Thriller"
+    ],
+    "release_date": "2026-10-09",
+    "age_rating": "PG-13",
+    "rating": null,
+    "tier": "soon",
+    "tmdb": "/movie/1281331-the-social-reckoning",
+    "backdrop_file": "the-social-reckoning-backdrop.jpg"
+  },
+  {
+    "title": "Verity",
+    "description": "Lowen Ashleigh is hired by Jeremy Crawford to ghostwrite novels for his bestselling author wife Verity, who is unable to finish following an accident. Lowen gradually uncovers Verity's disturbing truths while residing at the Crawfords' home to work.",
+    "tagline": "There is no light where we're going.",
+    "poster_file": "verity.jpg",
+    "trailer_url": "https://www.youtube.com/watch?v=xdPMKhjMSFs",
+    "duration_minutes": 117,
+    "genres": [
+      "Mystery",
+      "Thriller"
+    ],
+    "release_date": "2026-10-02",
+    "age_rating": "R",
+    "rating": null,
+    "tier": "soon",
+    "tmdb": "/movie/1283515-verity",
+    "backdrop_file": "verity-backdrop.jpg"
+  }
+]

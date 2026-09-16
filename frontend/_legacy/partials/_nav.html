@@ -1,0 +1,53 @@
+{% comment %}
+  Sticky top bar. `nav_transparent` comes from the view and is true only on
+  the home page, where the bar sits over the hero. main.js re-derives this on
+  every scroll — it only decides the first paint. Stated in the negative so
+  404.html, which Django renders with no view context, still comes out solid.
+{% endcomment %}
+<nav class="nav{% if not nav_transparent %} is-stuck{% endif %}" id="nav">
+  <div class="nav__inner">
+    <button class="nav__burger" id="burger" aria-label="Open menu"><svg><use href="#i-menu"/></svg></button>
+
+    <a href="{% url 'home' %}" class="logo" aria-label="CineVault home">CINE<span>VAULT</span></a>
+
+    <div class="city" id="city">
+      <button class="city__btn" id="cityBtn" aria-expanded="false">
+        <svg class="city__pin"><use href="#i-pin"/></svg>
+        <span id="cityLabel">New York</span>
+        <svg class="city__chev"><use href="#i-chev"/></svg>
+      </button>
+      <div class="city__menu" id="cityMenu" role="listbox">
+        <p class="city__menu-t">Select your city</p>
+        <button role="option">New York</button>
+        <button role="option">Los Angeles</button>
+        <button role="option">Chicago</button>
+        <button role="option">San Francisco</button>
+        <button role="option">Austin</button>
+        <button role="option">Seattle</button>
+      </div>
+    </div>
+
+    {% comment %}
+      Marked active server-side, so there's no flash before main.js runs.
+      "Now Showing" and "Coming Soon" share /movies/ and are told apart by
+      ?tab= — the same rule main.js used to apply from the filename.
+    {% endcomment %}
+    {% with here=request.resolver_match.url_name soon=request.GET.tab %}
+    <ul class="nav__links">
+      <li><a href="{% url 'movies' %}"{% if here == 'movies' and soon != 'soon' %} class="is-active"{% endif %}>Now Showing</a></li>
+      <li><a href="{% url 'movies' %}?tab=soon"{% if here == 'movies' and soon == 'soon' %} class="is-active"{% endif %}>Coming Soon</a></li>
+      <li><a href="{% url 'cinemas' %}"{% if here == 'cinemas' %} class="is-active"{% endif %}>Cinemas</a></li>
+      <li><a href="{% url 'home' %}#offers">Offers</a></li>
+    </ul>
+    {% endwith %}
+
+    <div class="nav__actions">
+      <div class="search">
+        <svg class="search__i"><use href="#i-search"/></svg>
+        <input type="search" id="q" placeholder="Search movies, cinemas…" aria-label="Search">
+      </div>
+      <button class="icon-btn has-dot" aria-label="Notifications"><svg><use href="#i-bell"/></svg></button>
+      <a href="{% url 'signin' %}" class="btn btn--accent btn--sm"><svg><use href="#i-user"/></svg>Sign In</a>
+    </div>
+  </div>
+</nav>

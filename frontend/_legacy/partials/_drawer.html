@@ -1,0 +1,17 @@
+{% comment %}
+  Mobile menu. main.js opens it from #burger and closes it on any link,
+  on the scrim, and on Escape.
+{% endcomment %}
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer__panel">
+    <div class="drawer__top">
+      <a href="{% url 'home' %}" class="logo" aria-label="CineVault home">CINE<span>VAULT</span></a>
+      <button class="icon-btn" id="drawerClose" aria-label="Close menu"><svg><use href="#i-close"/></svg></button>
+    </div>
+    <a href="{% url 'movies' %}">Now Showing</a>
+    <a href="{% url 'movies' %}?tab=soon">Coming Soon</a>
+    <a href="{% url 'cinemas' %}">Cinemas</a>
+    <a href="{% url 'home' %}#offers">Offers</a>
+    <a href="{% url 'signin' %}" class="btn btn--accent drawer__cta"><svg><use href="#i-user"/></svg>Sign In</a>
+  </div>
+</div>

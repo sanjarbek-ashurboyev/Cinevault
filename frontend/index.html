@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CineVault — Book cinema tickets</title>
+<meta name="description" content="Browse what is on, pick your seat and pay in seconds.">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#09090f">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+</head>
+<body data-page="index">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- injects the icon sprite, top nav and mobile drawer -->
+<script src="js/layout.js"></script>
+
+<main id="main">
+
+<!-- ══ hero ═════════════════════════════════════════════════════ -->
+<header class="hero" id="hero">
+  <div class="hero__art" id="heroArt"></div>
+  <div class="hero__scrim"></div>
+  <div class="hero__grain"></div>
+
+  <div class="hero__inner" id="heroInner">
+    <div class="hero__pills reveal" id="heroPills"></div>
+
+    <h1 class="hero__title reveal" id="heroTitle">Loading…</h1>
+
+    <div class="hero__meta reveal" id="heroMeta"></div>
+
+    <p class="hero__desc reveal" id="heroDesc"></p>
+
+    <div class="hero__cta reveal">
+      <a href="#" class="btn btn--accent btn--lg" id="heroBook"><svg><use href="#i-ticket"/></svg>Book Tickets</a>
+      <a href="#" class="btn btn--ghost btn--lg" id="heroTrailer" target="_blank" rel="noopener" hidden>
+        <svg><use href="#i-play"/></svg>Watch Trailer
+      </a>
+    </div>
+
+    <p class="hero__from reveal" id="heroFrom"></p>
+  </div>
+
+</header>
+
+
+<!-- ══ quick booking bar ════════════════════════════════════════ -->
+<section class="bookbar-wrap">
+  <form class="bookbar" id="bookbar" onsubmit="return false">
+    <div class="bookbar__f">
+      <label for="f-movie">Movie</label>
+      <div class="bookbar__ctl">
+        <svg><use href="#i-ticket"/></svg>
+        <select id="f-movie"><option value="">Any movie</option></select>
+        <svg class="bookbar__chev"><use href="#i-chev"/></svg>
+      </div>
+    </div>
+
+    <div class="bookbar__f">
+      <label for="f-date">Date</label>
+      <div class="bookbar__ctl">
+        <svg><use href="#i-cal"/></svg>
+        <input type="date" id="f-date">
+      </div>
+    </div>
+
+    <div class="bookbar__f">
+      <label for="f-hall">Hall</label>
+      <div class="bookbar__ctl">
+        <svg><use href="#i-screen"/></svg>
+        <select id="f-hall"><option value="">All halls</option></select>
+        <svg class="bookbar__chev"><use href="#i-chev"/></svg>
+      </div>
+    </div>
+
+    <button class="btn btn--accent bookbar__go" type="button" id="bookbarGo">
+      <svg><use href="#i-search"/></svg>Find Showtimes
+    </button>
+  </form>
+</section>
+
+
+<!-- ══ stats ════════════════════════════════════════════════════ -->
+<div class="stats">
+  <div class="stats__in" id="stats"></div>
+</div>
+
+
+<!-- ══ now showing ══════════════════════════════════════════════ -->
+<section class="section" id="now-showing">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">On this week</p>
+        <h2 class="h2">Now Showing</h2>
+      </div>
+      <a href="movies.html" class="link-more">View all films <svg><use href="#i-arrow"/></svg></a>
+    </div>
+
+    <div class="dates" id="dates" role="tablist" aria-label="Choose date"></div>
+
+    <div class="grid grid--movies" id="movieGrid"></div>
+
+    <p class="grid-empty" id="gridEmpty"></p>
+  </div>
+</section>
+
+
+<!-- ══ coming soon ══════════════════════════════════════════════ -->
+<section class="section section--alt" id="coming-soon">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="eyebrow">Nothing scheduled yet</p>
+        <h2 class="h2">Coming Soon</h2>
+      </div>
+      <a href="movies.html?tab=soon" class="link-more">Full list <svg><use href="#i-arrow"/></svg></a>
+    </div>
+
+    <div class="grid grid--soon" id="soonGrid"></div>
+  </div>
+</section>
+
+</main>
+
+<script src="js/main.js"></script>
+<script src="js/catalogue.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/home.js"></script>
+</body>
+</html>

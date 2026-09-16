@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout — CineVault</title>
+<meta name="description" content="Pay for your reserved seats.">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#09090f">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages.css">
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+</head>
+<body data-page="checkout">
+
+<a class="skip" href="#main">Skip to content</a>
+
+<script src="js/layout.js"></script>
+
+<main id="main" class="wrap pagetop">
+
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="index.html">Home</a>
+    <svg><use href="#i-arrow"/></svg>
+    <a href="movies.html">Movies</a>
+    <svg><use href="#i-arrow"/></svg>
+    <span>Checkout</span>
+  </nav>
+
+  <div class="steps">
+    <span class="step is-done"><b>1</b>Choose seats</span>
+    <span class="steps__sep"></span>
+    <span class="step is-on"><b>2</b>Payment</span>
+    <span class="steps__sep"></span>
+    <span class="step"><b>3</b>Confirmation</span>
+  </div>
+
+  <div class="booking" id="bookingWrap">
+
+    <form class="checkout__form" id="payForm" novalidate>
+
+      <div class="panel">
+        <h3>Who&rsquo;s coming?</h3>
+        <div class="field--row">
+          <div class="field">
+            <label for="c-first">First name</label>
+            <input type="text" id="c-first" name="first" autocomplete="given-name" placeholder="Alex" required>
+          </div>
+          <div class="field">
+            <label for="c-last">Last name</label>
+            <input type="text" id="c-last" name="last" autocomplete="family-name" placeholder="Brown" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="c-email">Email</label>
+          <input type="email" id="c-email" name="email" autocomplete="email" placeholder="you@example.com" required>
+          <span class="field__hint">Stripe sends the payment receipt here.</span>
+        </div>
+        <div class="field">
+          <label for="c-phone">Mobile (optional)</label>
+          <input type="tel" id="c-phone" name="phone" autocomplete="tel" placeholder="+1 555 010 4477">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Payment</h3>
+        <div id="paymentElement"></div>
+        <p class="field__hint">
+          Test mode — use card <code>4242 4242 4242 4242</code>, any future expiry and any CVC.
+        </p>
+        <p class="msg" id="payError" hidden></p>
+      </div>
+
+    </form>
+
+    <aside class="rail">
+      <h3>Order Summary</h3>
+      <p class="rail__sub" id="railSub">&nbsp;</p>
+
+      <p class="rail__hold" id="holdTimer">&nbsp;</p>
+
+      <div class="rail__row"><span>Hall</span><span id="rVenue">—</span></div>
+      <div class="rail__row"><span>Date</span><span id="rDate">—</span></div>
+      <div class="rail__row"><span>Showtime</span><span id="rTime">—</span></div>
+
+      <div class="rail__div"></div>
+
+      <div class="rail__row">
+        <span>Seats</span>
+        <span class="rail__seats" id="rSeats"><span class="rail__none">None selected</span></span>
+      </div>
+
+      <div class="rail__div"></div>
+
+      <div class="rail__row"><span id="rTicketsLab">Tickets</span><span id="rSub">$0.00</span></div>
+
+      <div class="rail__total"><span>Total</span><b id="rTotal">$0.00</b></div>
+
+      <button class="btn btn--accent btn--lg btn--full" type="submit" form="payForm" id="pay">
+        <svg><use href="#i-lock"/></svg>Pay &amp; confirm
+      </button>
+      <p class="rail__note"><a href="seats.html" id="backSeats" style="color:var(--accent)">Change seats</a></p>
+    </aside>
+
+  </div>
+
+</main>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script src="js/main.js"></script>
+<script src="js/checkout.js"></script>
+</body>
+</html>

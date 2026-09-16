@@ -1,0 +1,71 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ page_title }}{% endblock %}</title>
+{% comment %}
+  The views supply page_description, so pages normally override nothing here.
+  Django templates can't render one block twice, hence the two blocks — both
+  default to the same value. 404.html has no view and so sets them itself.
+{% endcomment %}
+<meta name="description" content="{% block description %}{{ page_description }}{% endblock %}">
+<link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{% block og_title %}{{ page_title }}{% endblock %}">
+<meta property="og:description" content="{% block og_description %}{{ page_description }}{% endblock %}">
+{% comment %}
+  og:image was <meta content="og-card.svg"> on every page, but no such file
+  ever existed — the tag is left out rather than carried over broken.
+{% endcomment %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#09090f">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}">
+{% block extra_css %}{% endblock %}
+</head>
+<body{% block body_class %}{% endblock %}>
+
+<a class="skip" href="#main">Skip to content</a>
+
+{% include "partials/_sprite.html" %}
+{% include "partials/_nav.html" %}
+{% include "partials/_drawer.html" %}
+
+<main id="main"{% block main_class %}{% endblock %}>
+{% block content %}{% endblock %}
+</main>
+
+{% include "partials/_footer.html" %}
+
+<button class="to-top" id="toTop" aria-label="Back to top"><svg><use href="#i-up"/></svg></button>
+
+{% comment %}
+  Routing lives in urls.py, so the scripts read their targets from here
+  instead of hard-coding filenames. Must come before main.js.
+{% endcomment %}
+<script>
+  window.CV_URLS = {
+    home:         "{% url 'home' %}",
+    movies:       "{% url 'movies' %}",
+    movie:        "{% url 'movie' %}",
+    seats:        "{% url 'seats' %}",
+    checkout:     "{% url 'checkout' %}",
+    confirmation: "{% url 'confirmation' %}",
+    cinemas:      "{% url 'cinemas' %}",
+    signin:       "{% url 'signin' %}"
+  };
+</script>
+
+{% comment %}
+  Load order is load-bearing: main.js defines the CV namespace that
+  data.js and the page scripts consume.
+{% endcomment %}
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>
