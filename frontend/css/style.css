@@ -380,6 +380,11 @@ svg{width:1em;height:1em;flex:none}
   position:relative;z-index:20;
   max-width:var(--wrap);margin:-72px auto 0;padding-inline:24px;
 }
+/* home.js hides the hero when there are no films to feature. The negative
+   margin above only makes sense overlapping the hero — without it the bar
+   rides up under the fixed nav, so clear the nav instead. Specific enough
+   to beat the mobile margin-top override too. */
+.hero[hidden] + .bookbar-wrap{margin-top:calc(var(--nav-h) + 32px)}
 .bookbar{
   display:grid;
   grid-template-columns:repeat(4,1fr) auto;
