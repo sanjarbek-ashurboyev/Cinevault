@@ -66,11 +66,32 @@ services:
       web:
         condition: service_started
 
-  nginx:
-    image: nginx:1.27-alpine
+  # Terminates TLS and proxies to nginx. The certificates live in
+  # caddy_data — losing that volume means re-requesting them, and Let's
+  # Encrypt rate-limits repeated requests for the same domain.
+  caddy:
+    image: caddy:2-alpine
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?SITE_DOMAIN is required}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - nginx
+
+  # No published port: only Caddy reaches it. That is what lets nginx.conf
+  # trust the X-Forwarded-Proto header it receives.
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    expose:
+      - "80"
     volumes:
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./frontend:/usr/share/nginx/html:ro
@@ -84,3 +105,5 @@ volumes:
   redisdata:
   static:
   media:
+  caddy_data:
+  caddy_config:

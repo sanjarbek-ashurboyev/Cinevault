@@ -1,0 +1,17 @@
+# TLS termination. Caddy is the only container with published ports; it
+# fetches and renews Let's Encrypt certificates on its own and hands plain
+# HTTP to nginx on the internal network.
+#
+# SITE_DOMAIN comes from .env. The domain must already resolve to this
+# server, and ports 80 and 443 must be open, or the certificate request
+# fails — Caddy retries, but the site stays down until it succeeds.
+
+{$SITE_DOMAIN} {
+	# Caddy sets X-Forwarded-Proto: https itself and overwrites any value
+	# the client sent, which is what makes it safe for nginx to pass on.
+	reverse_proxy nginx:80
+}
+
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}

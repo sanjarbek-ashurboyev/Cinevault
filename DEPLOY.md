@@ -1,12 +1,15 @@
 # Deploying CineVault
 
-Five containers behind one port. nginx is the only thing published; the
+Six containers behind ports 80/443. Caddy is the only thing published; the
 database, Redis and gunicorn are reachable only on the internal compose
 network.
 
 ```
-                         :80
+                      :80 :443
                           │
+                       ┌──▼────┐
+                       │ caddy │   TLS, certificates
+                       └──┬────┘
                        ┌──▼────┐   /            → frontend/ (static files)
                        │ nginx │   /static/      → static volume
                        └──┬────┘   /media/       → media volume
@@ -75,10 +78,20 @@ production.
 
 ## TLS
 
-Nothing here terminates TLS yet — `docker/nginx.conf` listens on 80
-only. Either put the stack behind something that already does (Caddy,
-Cloudflare, a cloud load balancer), or add certbot and a `listen 443 ssl`
-server block.
+Caddy sits in front of nginx and is the only container with published
+ports (80 and 443). It requests a Let's Encrypt certificate for
+`SITE_DOMAIN` (and `www.` which redirects to it) on first start and
+renews it on its own. Before starting it:
+
+- `SITE_DOMAIN` is set in `.env`, and both it and `www.` resolve to the server
+- ports 80 and 443 are open in the server/provider firewall
+
+```sh
+docker compose logs caddy | grep -i certificate   # "certificate obtained successfully"
+```
+
+Certificates are stored in the `caddy_data` volume. Never `down -v` a
+running site casually: Let's Encrypt rate-limits re-issuing for a domain.
 
 Once HTTPS is confirmed working, and only then:
 
