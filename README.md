@@ -1,5 +1,7 @@
 # CineVault
 
+[![Tests](https://github.com/sanjarbek-ashurboyev/Cinevault/actions/workflows/tests.yml/badge.svg)](https://github.com/sanjarbek-ashurboyev/Cinevault/actions/workflows/tests.yml)
+
 A movie reservation service: browse films and showtimes, pick seats on a live seat map,
 pay with Stripe and get the ticket by email. The backend is a Django REST Framework API.
 Payments, seat holds and emails all run through Celery and Redis.
@@ -99,6 +101,18 @@ make dev                      # API :8000 + Celery + frontend :5500 + Stripe lis
 ```
 
 Run `make` with no arguments to see every available command.
+
+## Tests
+
+68 tests cover registration and email verification, password reset, seat reservation
+(double-booking, concurrent seat locks, the 10-minute hold), the Stripe webhook
+(duplicate events, payments after the hold expired, failed payments), ticket emails and
+permissions. They use SQLite and an in-memory cache, with Stripe and Celery mocked, so
+no services are needed:
+
+```bash
+make test
+```
 
 ## Deployment
 

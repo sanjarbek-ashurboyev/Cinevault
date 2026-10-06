@@ -1,3 +1,148 @@
-from django.test import TestCase
+from types import SimpleNamespace
+from unittest import mock
 
-# Create your tests here.
+import stripe
+from django.test import TestCase
+from rest_framework.test import APIClient
+
+from payments.models import Payment
+from reservations.models import Reservation, ReservationSeat
+from test_helpers import client_for, make_showtime, make_user
+
+WEBHOOK = '/api/v1/payments/webhook/'
+
+
+def make_reservation(user, status=Reservation.StatusType.PENDING):
+    showtime = make_showtime(price=20)
+    reservation = Reservation.objects.create(user=user, showtime=showtime, status=status, total_price=40)
+    ReservationSeat.objects.bulk_create(
+        ReservationSeat(reservation=reservation, seat=s, showtime=showtime)
+        for s in showtime.hall.seats.all()[:2]
+    )
+    return reservation
+
+
+@mock.patch('payments.views.stripe.PaymentIntent.create',
+            return_value=SimpleNamespace(id='pi_123', client_secret='pi_123_secret'))
+class CreatePaymentIntentTests(TestCase):
+    def setUp(self):
+        self.user = make_user()
+        self.reservation = make_reservation(self.user)
+
+    def url(self, reservation_id=None):
+        return f'/api/v1/payments/create-intent/{reservation_id or self.reservation.id}/'
+
+    def test_creates_intent_for_the_reservation_total(self, create):
+        response = client_for(self.user).post(self.url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'client_secret': 'pi_123_secret'})
+        self.assertEqual(create.call_args.kwargs['amount'], 4000, 'Stripe amounts are in cents')
+        self.assertEqual(create.call_args.kwargs['metadata'], {'reservation_id': str(self.reservation.id)})
+        payment = Payment.objects.get()
+        self.assertEqual((payment.stripe_payment_intent_id, payment.amount, payment.status), ('pi_123', 40, 'pending'))
+
+    def test_retrying_reuses_the_payment_row(self, create):
+        client = client_for(self.user)
+        client.post(self.url())
+        create.return_value = SimpleNamespace(id='pi_456', client_secret='pi_456_secret')
+        client.post(self.url())
+
+        self.assertEqual(Payment.objects.get().stripe_payment_intent_id, 'pi_456')
+
+    def test_cannot_pay_for_someone_elses_reservation(self, create):
+        stranger = make_user(email='stranger@example.com')
+        self.assertEqual(client_for(stranger).post(self.url()).status_code, 404)
+        create.assert_not_called()
+
+    def test_cannot_pay_for_a_cancelled_reservation(self, create):
+        self.reservation.cancel()
+        self.assertEqual(client_for(self.user).post(self.url()).status_code, 400)
+        create.assert_not_called()
+
+    def test_requires_login(self, create):
+        self.assertEqual(APIClient().post(self.url()).status_code, 401)
+
+
+@mock.patch('payments.views.send_reservation_ticket')
+@mock.patch('payments.views.stripe.Webhook.construct_event')
+class StripeWebhookTests(TestCase):
+    def setUp(self):
+        self.reservation = make_reservation(make_user())
+        self.payment = Payment.objects.create(
+            reservation=self.reservation, stripe_payment_intent_id='pi_123', amount=40,
+        )
+
+    def deliver(self, construct_event, event_type, intent_id='pi_123'):
+        construct_event.return_value = {'type': event_type, 'data': {'object': {'id': intent_id}}}
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(WEBHOOK, b'{}', content_type='application/json',
+                                    HTTP_STRIPE_SIGNATURE='t=1,v1=sig')
+
+    def refresh(self):
+        self.payment.refresh_from_db()
+        self.reservation.refresh_from_db()
+
+    def test_bad_signature_is_rejected(self, construct_event, ticket):
+        construct_event.side_effect = stripe.error.SignatureVerificationError('bad', 't=1,v1=sig')
+        response = self.client.post(WEBHOOK, b'{}', content_type='application/json',
+                                    HTTP_STRIPE_SIGNATURE='t=1,v1=sig')
+
+        self.assertEqual(response.status_code, 400)
+        self.refresh()
+        self.assertEqual(self.reservation.status, Reservation.StatusType.PENDING)
+
+    def test_signature_is_checked_with_the_webhook_secret(self, construct_event, ticket):
+        self.deliver(construct_event, 'payment_intent.succeeded')
+        payload, header, secret = construct_event.call_args.args
+        self.assertEqual((header, secret), ('t=1,v1=sig', 'whsec_dummy'))
+
+    def test_successful_payment_confirms_and_sends_one_ticket(self, construct_event, ticket):
+        response = self.deliver(construct_event, 'payment_intent.succeeded')
+
+        self.assertEqual(response.status_code, 200)
+        self.refresh()
+        self.assertEqual(self.payment.status, 'succeeded')
+        self.assertEqual(self.reservation.status, Reservation.StatusType.CONFIRMED)
+        ticket.delay.assert_called_once_with(self.reservation.id)
+
+    def test_duplicate_event_does_not_send_a_second_ticket(self, construct_event, ticket):
+        self.deliver(construct_event, 'payment_intent.succeeded')
+        self.deliver(construct_event, 'payment_intent.succeeded')
+
+        ticket.delay.assert_called_once()
+        self.refresh()
+        self.assertEqual(self.reservation.status, Reservation.StatusType.CONFIRMED)
+
+    def test_payment_after_the_hold_expired_is_flagged_for_refund(self, construct_event, ticket):
+        self.reservation.cancel()  # the 10-minute hold lapsed and the seats were released
+
+        with self.assertLogs('payments.views', 'ERROR') as logs:
+            response = self.deliver(construct_event, 'payment_intent.succeeded')
+
+        self.assertEqual(response.status_code, 200)
+        self.refresh()
+        self.assertEqual(self.payment.status, 'succeeded', 'the money is real, so the payment is recorded')
+        self.assertEqual(self.reservation.status, Reservation.StatusType.CANCELLED)
+        self.assertIn('refunding', logs.output[0])
+        ticket.delay.assert_not_called()
+
+    def test_failed_payment_cancels_and_releases_seats(self, construct_event, ticket):
+        response = self.deliver(construct_event, 'payment_intent.payment_failed')
+
+        self.assertEqual(response.status_code, 200)
+        self.refresh()
+        self.assertEqual(self.payment.status, 'failed')
+        self.assertEqual(self.reservation.status, Reservation.StatusType.CANCELLED)
+        self.assertFalse(ReservationSeat.objects.exists())
+        ticket.delay.assert_not_called()
+
+    def test_unknown_payment_intent_is_acknowledged(self, construct_event, ticket):
+        response = self.deliver(construct_event, 'payment_intent.succeeded', intent_id='pi_unknown')
+        self.assertEqual(response.status_code, 200, 'Stripe would retry forever on a non-2xx')
+        ticket.delay.assert_not_called()
+
+    def test_other_event_types_are_ignored(self, construct_event, ticket):
+        self.assertEqual(self.deliver(construct_event, 'charge.refunded').status_code, 200)
+        self.refresh()
+        self.assertEqual(self.reservation.status, Reservation.StatusType.PENDING)

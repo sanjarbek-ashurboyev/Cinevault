@@ -21,7 +21,7 @@ DEV_ENV := DJANGO_DEBUG=True \
 WEBHOOK_PATH := /api/v1/payments/webhook/
 
 .DEFAULT_GOAL := help
-.PHONY: help run celery front stripe dev mig migrate seed superuser shell check clean
+.PHONY: help run celery front stripe dev mig migrate seed superuser shell check test clean
 
 help: ## show this list
 	@echo "CineVault — make targets:"
@@ -98,6 +98,9 @@ shell: ## Django shell
 check: ## system checks + warn about un-generated migrations
 	$(DEV_ENV) $(PY) manage.py check
 	$(DEV_ENV) $(PY) manage.py makemigrations --check --dry-run
+
+test: ## run the test suite (SQLite + in-memory cache, no Redis needed)
+	$(PY) manage.py test --settings=root.settings_test
 
 clean: ## delete __pycache__ directories and stray .pyc files
 	find . -path ./.venv -prune -o -type d -name '__pycache__' -exec rm -rf {} +

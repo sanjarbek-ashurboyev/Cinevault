@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      # SQLite and an in-memory cache: no PostgreSQL, Redis, SMTP or Stripe needed.
+      - run: python manage.py test --settings=root.settings_test --verbosity 2
+      - name: Migrations are up to date
+        run: python manage.py makemigrations --check --dry-run
+        env:
+          DJANGO_SECRET_KEY: ci
+          DB_ENGINE: sqlite
