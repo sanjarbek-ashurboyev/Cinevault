@@ -104,10 +104,10 @@ Run `make` with no arguments to see every available command.
 
 ## Tests
 
-68 tests cover registration and email verification, password reset, seat reservation
+77 tests cover registration and email verification, password reset, seat reservation
 (double-booking, concurrent seat locks, the 10-minute hold), the Stripe webhook
-(duplicate events, payments after the hold expired, failed payments), ticket emails and
-permissions. They use SQLite and an in-memory cache, with Stripe and Celery mocked, so
+(duplicate events, payments after the hold expired, failed payments), ticket emails,
+permissions, refusing started showtimes and limits on code guessing. They use SQLite and an in-memory cache, with Stripe and Celery mocked, so
 no services are needed:
 
 ```bash
