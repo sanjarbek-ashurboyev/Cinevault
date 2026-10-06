@@ -1,5 +1,4 @@
 import logging
-import random
 
 from django.core.cache import cache
 from django.db import transaction
@@ -14,7 +13,7 @@ from accounts.models import User
 from accounts.serializers import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, \
     ProfileSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 from accounts.tasks import send_mail, send_password_reset_email
-from accounts.utils import redis_client
+from accounts.utils import code_request_allowed, generate_code, redis_client, reset_failed_attempts
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class RegisterCreateAPIView(CreateAPIView):
     def perform_create(self, serializer):
         with transaction.atomic():
             user = serializer.save()
-            code = str(random.randint(100000, 999999))
+            code = generate_code()
             cache.set(f'verify_code:{user.email}', code, timeout=VERIFY_CODE_TTL)
             transaction.on_commit(lambda: self._queue_verification(user.email, code))
 
@@ -71,9 +70,15 @@ class ResendVerificationAPIView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
+        if not code_request_allowed('verify', email):
+            return Response(
+                {'detail': 'Too many codes requested. Try again in an hour.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
 
-        code = str(random.randint(100000, 999999))
+        code = generate_code()
         cache.set(f'verify_code:{email}', code, timeout=VERIFY_CODE_TTL)
+        reset_failed_attempts('verify', email)
 
         send_mail.delay(email, code)
 
@@ -111,9 +116,12 @@ class PasswordResetRequestAPIView(GenericAPIView):
         email = serialier.validated_data['email']
 
         user = User.objects.filter(email=email).first()
-        if user is not None:
-            code = str(random.randint(100000, 999999))
+        # Over the limit, answer exactly as for an unknown address so the response
+        # never reveals whether an account exists.
+        if user is not None and code_request_allowed('password_reset', user.email):
+            code = generate_code()
             redis_client.setex(f'password_reset:{user.id}', 600, code)
+            reset_failed_attempts('password_reset', user.id)
             send_password_reset_email.delay(user.email, code)
 
         return Response(

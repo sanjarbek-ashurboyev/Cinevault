@@ -7,7 +7,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.models import User
-from accounts.utils import redis_client
+from accounts.utils import failed_attempt_limit_reached, redis_client, reset_failed_attempts
 
 
 class RegisterSerializer(ModelSerializer):
@@ -58,7 +58,12 @@ class VerifyEmailSerializer(Serializer):
         if cached_code is None:
             raise ValidationError('Code expired or not found')
         if cached_code != code:
+            if failed_attempt_limit_reached('verify', email):
+                cache.delete(f'verify_code:{email}')
+                reset_failed_attempts('verify', email)
+                raise ValidationError('Too many wrong codes. Request a new code.')
             raise ValidationError('Invalid verification code')
+        reset_failed_attempts('verify', email)
 
         attrs['user'] = User.objects.filter(email=email).first()
         if attrs['user'] is None:
@@ -128,6 +133,10 @@ class PasswordResetConfirmSerializer(Serializer):
 
         stored_code = stored_code.decode() if isinstance(stored_code, bytes) else stored_code
         if stored_code != attrs['code']:
+            if failed_attempt_limit_reached('password_reset', user.id):
+                redis_client.delete(f'password_reset:{user.id}')
+                reset_failed_attempts('password_reset', user.id)
+                raise ValidationError({'code': 'Too many wrong codes. Request a new code.'})
             raise ValidationError({'code': 'Invalid code'})
 
         validate_password(attrs['new_password'], user=user)
@@ -140,6 +149,7 @@ class PasswordResetConfirmSerializer(Serializer):
         user.set_password(self.validated_data['new_password'])
         user.save(update_fields=['password'])
         redis_client.delete(f'password_reset:{user.id}')
+        reset_failed_attempts('password_reset', user.id)
         return user
 
 

@@ -1,8 +1,10 @@
+from datetime import timedelta
 from types import SimpleNamespace
 from unittest import mock
 
 import stripe
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from payments.models import Payment
@@ -58,6 +60,16 @@ class CreatePaymentIntentTests(TestCase):
     def test_cannot_pay_for_a_cancelled_reservation(self, create):
         self.reservation.cancel()
         self.assertEqual(client_for(self.user).post(self.url()).status_code, 400)
+        create.assert_not_called()
+
+    def test_cannot_pay_once_the_showtime_has_started(self, create):
+        showtime = self.reservation.showtime
+        showtime.start_time = timezone.now() - timedelta(minutes=1)
+        showtime.save()
+
+        response = client_for(self.user).post(self.url())
+
+        self.assertEqual(response.status_code, 400)
         create.assert_not_called()
 
     def test_requires_login(self, create):

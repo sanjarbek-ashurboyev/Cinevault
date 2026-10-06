@@ -5,6 +5,7 @@ import stripe
 from django.conf import settings
 from django.db import transaction
 from django.http import HttpResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
@@ -32,6 +33,9 @@ class CreatePaymentIntentView(APIView):
 
         if reservation.status != Reservation.StatusType.PENDING:
             return Response({"detail": "Reservation is not payable."}, status=status.HTTP_400_BAD_REQUEST)
+        # A hold placed just before the start must not be paid for once the film is running.
+        if reservation.showtime.start_time <= timezone.now():
+            return Response({"detail": "This showtime has already started."}, status=status.HTTP_400_BAD_REQUEST)
 
         amount_in_cents = int(reservation.total_price * 100)
 

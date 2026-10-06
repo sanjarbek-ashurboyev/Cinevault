@@ -141,6 +141,7 @@ class LoginAndProfileTests(TestCase):
 @mock.patch('accounts.views.send_password_reset_email')
 class PasswordResetTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.client = APIClient()
         self.user = make_user()
         self.redis = FakeRedis()
@@ -184,3 +185,88 @@ class PasswordResetTests(TestCase):
         self.assertEqual(self.confirm('111111').status_code, 400)
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password('Str0ng-pass!'))
+
+
+class CodeGenerationTests(TestCase):
+    def test_codes_are_six_digits_from_secrets(self):
+        from accounts.utils import generate_code
+        with mock.patch('accounts.utils.secrets.randbelow', return_value=42) as randbelow:
+            self.assertEqual(generate_code(), '000042', 'leading zeros are kept')
+        randbelow.assert_called_once_with(1_000_000)
+
+
+@mock.patch('accounts.views.send_mail')
+class VerificationBruteForceTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.user = make_user(email='new@example.com', verified=False)
+        cache.set('verify_code:new@example.com', '123456')
+
+    def guess(self, code):
+        return self.client.post(VERIFY, {'email': 'new@example.com', 'code': code})
+
+    def test_five_wrong_guesses_destroy_the_code(self, send_mail):
+        for _ in range(4):
+            self.assertEqual(self.guess('000000').status_code, 400)
+        response = self.guess('000000')
+        self.assertIn('Too many wrong codes', str(response.data))
+
+        self.assertEqual(self.guess('123456').status_code, 400, 'even the right code is dead now')
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_verified)
+
+    def test_a_few_typos_do_not_lock_the_user_out(self, send_mail):
+        for _ in range(4):
+            self.guess('000000')
+        self.assertEqual(self.guess('123456').status_code, 200)
+
+    def test_a_new_code_gets_a_fresh_set_of_attempts(self, send_mail):
+        for _ in range(4):
+            self.guess('000000')
+        self.client.post(RESEND, {'email': 'new@example.com'})
+        new_code = cache.get('verify_code:new@example.com')
+        for _ in range(4):
+            self.guess('000000')
+        self.assertEqual(self.guess(new_code).status_code, 200)
+
+    def test_at_most_five_codes_per_hour(self, send_mail):
+        for _ in range(5):
+            self.assertEqual(self.client.post(RESEND, {'email': 'new@example.com'}).status_code, 200)
+        self.assertEqual(self.client.post(RESEND, {'email': 'new@example.com'}).status_code, 429)
+        self.assertEqual(send_mail.delay.call_count, 5)
+
+
+@mock.patch('accounts.views.send_password_reset_email')
+class PasswordResetBruteForceTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.user = make_user()
+        self.redis = FakeRedis()
+        for target in ('accounts.views.redis_client', 'accounts.serializers.redis_client'):
+            patcher = mock.patch(target, self.redis)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.redis.setex(f'password_reset:{self.user.id}', 600, '654321')
+
+    def confirm(self, code):
+        return self.client.post(RESET_CONFIRM, {
+            'email': 'user@example.com', 'code': code,
+            'new_password': 'An0ther-pass!', 'confirm_password': 'An0ther-pass!',
+        })
+
+    def test_five_wrong_guesses_destroy_the_code(self, send_reset):
+        for _ in range(5):
+            self.assertEqual(self.confirm('111111').status_code, 400)
+
+        self.assertEqual(self.confirm('654321').status_code, 400)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Str0ng-pass!'), 'password must be unchanged')
+
+    def test_request_limit_does_not_reveal_the_account(self, send_reset):
+        answers = [self.client.post(RESET, {'email': 'user@example.com'}) for _ in range(6)]
+
+        self.assertEqual({a.status_code for a in answers}, {200})
+        self.assertEqual(len({str(a.data) for a in answers}), 1, 'the 6th answer looks like the rest')
+        self.assertEqual(send_reset.delay.call_count, 5)

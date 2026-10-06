@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from django.db import transaction, IntegrityError
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import ListField, IntegerField
 from rest_framework.serializers import ModelSerializer
@@ -29,6 +30,8 @@ class ReservationCreateSerializer(ModelSerializer):
     def validate(self, attrs):
         showtime = attrs['showtime']
         seat_ids = attrs['seat_ids']
+        if showtime.start_time <= timezone.now():
+            raise ValidationError("This showtime has already started.")
 
         if len(seat_ids) != len(set(seat_ids)):
             raise ValidationError("Duplicate seat IDs in request.")

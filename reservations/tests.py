@@ -1,3 +1,4 @@
+from datetime import timedelta
 from unittest import mock
 
 from django.core import mail
@@ -94,6 +95,15 @@ class CreateReservationTests(TestCase):
 
     def test_duplicate_seat_ids_are_refused(self, cancel_task):
         self.assertEqual(self.reserve([self.seats[0].id, self.seats[0].id]).status_code, 400)
+
+    def test_a_showtime_that_already_started_cannot_be_booked(self, cancel_task):
+        started = make_showtime(starts_in=-timedelta(minutes=1))
+        response = self.client.post(
+            URL, {'showtime': started.id, 'seat_ids': [started.hall.seats.first().id]}, format='json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('already started', str(response.data))
+        self.assertFalse(Reservation.objects.exists())
 
     def test_empty_seat_list_is_refused(self, cancel_task):
         self.assertEqual(self.reserve([]).status_code, 400)
