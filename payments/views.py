@@ -73,44 +73,42 @@ def stripe_webhook(request):
 
     if event["type"] == "payment_intent.succeeded":
         intent = event["data"]["object"]
-        try:
-            payment = Payment.objects.get(stripe_payment_intent_id=intent["id"])
-        except Payment.DoesNotExist:
-            return HttpResponse(status=200)  # nothing to do
+        with transaction.atomic():
+            locked = _lock_payment(intent["id"])
+            if locked is None:
+                return HttpResponse(status=200)  # nothing to do
+            payment, reservation = locked
 
-        # Stripe retries a webhook until it gets a 2xx and can deliver the
-        # same event more than once, so this branch has to be safe to run
-        # twice. Confirming an already-confirmed reservation is harmless;
-        # emailing a second ticket is not.
-        already_handled = payment.status == "succeeded"
+            # Stripe retries a webhook until it gets a 2xx and can deliver the
+            # same event more than once, so this branch has to be safe to run
+            # twice. Confirming an already-confirmed reservation is harmless;
+            # emailing a second ticket is not.
+            already_handled = payment.status == "succeeded"
 
-        reservation = payment.reservation
-
-        # The money is real whatever else happened, so the payment row is
-        # always updated. The booking is a different question: if the hold
-        # already lapsed, its seats have been released and may since have
-        # been sold to somebody else. Flipping it to CONFIRMED would hand
-        # the customer a reservation with no seats behind it, so that case
-        # is left alone and logged for a refund instead.
-        payable = reservation.status in (
-            Reservation.StatusType.PENDING,
-            Reservation.StatusType.CONFIRMED,
-        )
-
-        if not payable:
-            logger.error(
-                "Payment %s succeeded for reservation %s, but that reservation is %s. "
-                "Seats were already released — this needs refunding by hand.",
-                intent["id"], reservation.id, reservation.status,
+            # The money is real whatever else happened, so the payment row is
+            # always updated. The booking is a different question: if the hold
+            # already lapsed, its seats have been released and may since have
+            # been sold to somebody else. Flipping it to CONFIRMED would hand
+            # the customer a reservation with no seats behind it, so that case
+            # is left alone and logged for a refund instead.
+            payable = reservation.status in (
+                Reservation.StatusType.PENDING,
+                Reservation.StatusType.CONFIRMED,
             )
 
-        with transaction.atomic():
+            if not payable:
+                logger.error(
+                    "Payment %s succeeded for reservation %s, but that reservation is %s. "
+                    "Seats were already released — this needs refunding by hand.",
+                    intent["id"], reservation.id, reservation.status,
+                )
+
             payment.status = "succeeded"
-            payment.save()
+            payment.save(update_fields=["status"])
 
             if payable:
                 reservation.status = Reservation.StatusType.CONFIRMED
-                reservation.save()
+                reservation.save(update_fields=["status"])
 
             if payable and not already_handled:
                 # Queued rather than sent inline: Stripe expects an answer
@@ -124,14 +122,49 @@ def stripe_webhook(request):
 
     elif event["type"] == "payment_intent.payment_failed":
         intent = event["data"]["object"]
-        try:
-            payment = Payment.objects.get(stripe_payment_intent_id=intent["id"])
-        except Payment.DoesNotExist:
-            return HttpResponse(status=200)
+        with transaction.atomic():
+            locked = _lock_payment(intent["id"])
+            if locked is None:
+                return HttpResponse(status=200)
+            payment, reservation = locked
 
-        payment.status = "failed"
-        payment.save()
-        # releases the ReservationSeat rows too, so the seats go back on sale
-        payment.reservation.cancel()
+            # Stripe does not promise to deliver events in order. A declined
+            # first card can be reported after a second card already paid on
+            # the same intent; cancelling then would take the seats from a
+            # paying customer.
+            if payment.status == "succeeded":
+                return HttpResponse(status=200)
+
+            payment.status = "failed"
+            payment.save(update_fields=["status"])
+            if reservation.status == Reservation.StatusType.PENDING:
+                # releases the ReservationSeat rows too, so the seats go back on sale
+                reservation.cancel()
 
     return HttpResponse(status=200)
+
+
+def _lock_payment(intent_id):
+    """Lock the reservation and payment behind a PaymentIntent, or None if it isn't ours.
+
+    The hold-expiry task (reservations.tasks.cancel_reservation_if_unpaid)
+    can be cancelling the same reservation at this very moment. Without the
+    lock each side decides from a status it read before the other committed,
+    and the last write wins: a paid booking gets cancelled, or a cancelled one
+    gets confirmed with no seats behind it. Locked, one side waits and then
+    sees what the other did.
+
+    Always reservation first, then payment — the task locks in the same order,
+    so the two can never deadlock. Call inside transaction.atomic().
+    """
+    reservation_id = (
+        Payment.objects
+        .filter(stripe_payment_intent_id=intent_id)
+        .values_list("reservation_id", flat=True)
+        .first()
+    )
+    if reservation_id is None:
+        return None
+    reservation = Reservation.objects.select_for_update().get(pk=reservation_id)
+    payment = Payment.objects.select_for_update().get(stripe_payment_intent_id=intent_id)
+    return payment, reservation

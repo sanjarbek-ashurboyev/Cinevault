@@ -22,3 +22,33 @@ jobs:
         env:
           DJANGO_SECRET_KEY: ci
           DB_ENGINE: sqlite
+
+  # Row locks are a no-op on SQLite, so the concurrency tests
+  # (payments/test_concurrency.py) only run here, against real PostgreSQL.
+  test-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: cinevault
+          POSTGRES_USER: cinevault
+          POSTGRES_PASSWORD: ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U cinevault"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DB: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PASSWORD: ci
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python manage.py test --settings=root.settings_test --verbosity 2
