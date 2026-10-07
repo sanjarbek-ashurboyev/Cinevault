@@ -17,6 +17,20 @@ DATABASES = {
     }
 }
 
+# SQLite ignores row locks, so the concurrency tests only run against PostgreSQL:
+#     TEST_DB=postgres POSTGRES_PASSWORD=... python manage.py test --settings=root.settings_test
+if os.getenv('TEST_DB') == 'postgres':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'cinevault'),
+            'USER': os.getenv('POSTGRES_USER', 'cinevault'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        }
+    }
+
 # Verification codes and seat locks live in the cache; locmem replaces Redis.
 CACHES = {
     'default': {

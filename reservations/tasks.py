@@ -4,6 +4,7 @@ import logging
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -70,9 +71,20 @@ def cancel_reservation_if_unpaid(self, reservation_id):
         )
         return
 
-    # cancel() also releases the seat rows; leaving them behind would
-    # keep the seats unbookable even though the hold has lapsed.
-    reservation.cancel()
+    # Stripe was asked outside any lock: a row lock held across a network
+    # call would stall the webhook for as long as Stripe takes to answer.
+    # That round trip is also long enough for the payment to land, so lock
+    # the row now — the webhook takes the same lock — and look again. If
+    # the webhook confirmed the booking meanwhile, it is no longer PENDING.
+    with transaction.atomic():
+        reservation = (
+            Reservation.objects.select_for_update().filter(id=reservation_id).first()
+        )
+        if reservation is None or reservation.status != Reservation.StatusType.PENDING:
+            return
+        # cancel() also releases the seat rows; leaving them behind would
+        # keep the seats unbookable even though the hold has lapsed.
+        reservation.cancel()
 
 
 @shared_task(

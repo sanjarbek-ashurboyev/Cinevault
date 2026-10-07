@@ -149,6 +149,18 @@ class StripeWebhookTests(TestCase):
         self.assertFalse(ReservationSeat.objects.exists())
         ticket.delay.assert_not_called()
 
+    def test_late_failure_event_does_not_undo_a_successful_payment(self, construct_event, ticket):
+        # Stripe does not guarantee event order: a declined first card can be
+        # reported after a second card on the same intent already paid.
+        self.deliver(construct_event, 'payment_intent.succeeded')
+        response = self.deliver(construct_event, 'payment_intent.payment_failed')
+
+        self.assertEqual(response.status_code, 200)
+        self.refresh()
+        self.assertEqual(self.payment.status, 'succeeded')
+        self.assertEqual(self.reservation.status, Reservation.StatusType.CONFIRMED)
+        self.assertEqual(ReservationSeat.objects.count(), 2)
+
     def test_unknown_payment_intent_is_acknowledged(self, construct_event, ticket):
         response = self.deliver(construct_event, 'payment_intent.succeeded', intent_id='pi_unknown')
         self.assertEqual(response.status_code, 200, 'Stripe would retry forever on a non-2xx')

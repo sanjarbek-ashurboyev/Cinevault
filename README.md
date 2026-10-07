@@ -104,14 +104,22 @@ Run `make` with no arguments to see every available command.
 
 ## Tests
 
-77 tests cover registration and email verification, password reset, seat reservation
+80 tests cover registration and email verification, password reset, seat reservation
 (double-booking, concurrent seat locks, the 10-minute hold), the Stripe webhook
-(duplicate events, payments after the hold expired, failed payments), ticket emails,
-permissions, refusing started showtimes and limits on code guessing. They use SQLite and an in-memory cache, with Stripe and Celery mocked, so
-no services are needed:
+(duplicate events, out-of-order events, payments after the hold expired, failed payments),
+ticket emails, permissions, refusing started showtimes and limits on code guessing. They use
+SQLite and an in-memory cache, with Stripe and Celery mocked, so no services are needed:
 
 ```bash
 make test
+```
+
+Two of them check that the Stripe webhook and the hold-expiry task can't overwrite each
+other when they handle the same reservation at the same moment. That needs real row
+locks, so they are skipped on SQLite and run against PostgreSQL (CI does both):
+
+```bash
+TEST_DB=postgres POSTGRES_HOST=localhost POSTGRES_PASSWORD=... python manage.py test --settings=root.settings_test
 ```
 
 ## Deployment
