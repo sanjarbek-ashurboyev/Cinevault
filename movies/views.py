@@ -1,13 +1,17 @@
-from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework.filters import SearchFilter
-from rest_framework.generics import ListAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView, ListCreateAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    ListAPIView,
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
 from rest_framework.permissions import AllowAny
 
 from movies.filters import MovieModelFilterset
-from movies.models import Movie, Genre
-from movies.serializers import MovieSerializer, GenreSerializer
+from movies.models import Genre, Movie
+from movies.serializers import GenreSerializer, MovieSerializer
 from permissions import IsSuperUser
 
 

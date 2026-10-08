@@ -1,6 +1,6 @@
 from django.urls import path
 
-from halls.views import HallsListAPIView, HallSeatListView
+from halls.views import HallSeatListView, HallsListAPIView
 
 urlpatterns = [
     path('halls/', HallsListAPIView.as_view()),

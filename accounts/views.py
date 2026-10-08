@@ -10,10 +10,21 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from accounts.models import User
-from accounts.serializers import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, \
-    ProfileSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+from accounts.serializers import (
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    ProfileSerializer,
+    RegisterSerializer,
+    ResendVerificationSerializer,
+    VerifyEmailSerializer,
+)
 from accounts.tasks import send_mail, send_password_reset_email
-from accounts.utils import code_request_allowed, generate_code, redis_client, reset_failed_attempts
+from accounts.utils import (
+    code_request_allowed,
+    generate_code,
+    redis_client,
+    reset_failed_attempts,
+)
 
 logger = logging.getLogger(__name__)
 

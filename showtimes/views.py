@@ -1,18 +1,20 @@
-from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
-from rest_framework.filters import SearchFilter
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView, GenericAPIView, \
-    get_object_or_404
+from rest_framework.generics import (
+    GenericAPIView,
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+    get_object_or_404,
+)
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from halls.models import Seat
 from permissions import IsSuperUser
-from reservations.models import ReservationSeat, Reservation
+from reservations.models import Reservation, ReservationSeat
 from showtimes.filters import ShowtimeFilterset
 from showtimes.models import Showtime
-from showtimes.serializers import ShowtimeSerialer, SeatMapSerializer
+from showtimes.serializers import SeatMapSerializer, ShowtimeSerialer
 
 
 # Create your views here.

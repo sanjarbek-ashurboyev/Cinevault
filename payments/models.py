@@ -1,9 +1,16 @@
-from django.db import models
 
 # Create your models here.
-from django.db.models import OneToOneField, CASCADE, DecimalField, CharField, DateTimeField, Model
+from django.db.models import (
+    CASCADE,
+    CharField,
+    DateTimeField,
+    DecimalField,
+    Model,
+    OneToOneField,
+)
 
 from reservations.models import Reservation
+
 
 class Payment(Model):
     STATUS_CHOICES = [

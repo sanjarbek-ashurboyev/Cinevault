@@ -8,13 +8,14 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
-from rest_framework.views import APIView
+from rest_framework import permissions, status
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework.views import APIView
+
 from reservations.models import Reservation
 from reservations.tasks import send_reservation_ticket
-from .models import Payment
 
+from .models import Payment
 
 # Create your views here.
 logger = logging.getLogger(__name__)
