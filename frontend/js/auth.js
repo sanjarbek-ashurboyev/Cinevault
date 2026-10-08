@@ -38,16 +38,7 @@
 
   var next = CV.param('next', '');
 
-  /* An open redirect would let a crafted link bounce a freshly signed-in
-     visitor to another site, so only this site's own pages are honoured:
-     a single path segment like /tickets, never //host or a scheme. Old
-     links still carry next=tickets.html, which maps onto the clean path. */
-  function safeNext() {
-    if (/^\/[a-z0-9_-]*(\?[^#]*)?$/i.test(next)) return next;
-    var legacy = /^([a-z0-9_-]+)\.html(\?[^#]*)?$/i.exec(next);
-    if (legacy) return '/' + (legacy[1] === 'index' ? '' : legacy[1]) + (legacy[2] || '');
-    return '/';
-  }
+  function safeNext() { return CV.safeNext(next); }
 
   var COPY = {
     in: {

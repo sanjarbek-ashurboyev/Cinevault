@@ -92,6 +92,18 @@ window.CV = (function () {
     return v === null || v === '' ? fallback : v;
   }
 
+  /* Where a ?next= link may send the visitor. An open redirect would let a
+     crafted link bounce someone to another site, or run script through a
+     javascript: URL, so only this site's own pages are honoured: a single
+     path segment like /tickets, never //host or a scheme. Old links still
+     carry next=tickets.html, which maps onto the clean path. */
+  function safeNext(next) {
+    if (/^\/[a-z0-9_-]*(\?[^#]*)?$/i.test(next)) return next;
+    var legacy = /^([a-z0-9_-]+)\.html(\?[^#]*)?$/i.exec(next);
+    if (legacy) return '/' + (legacy[1] === 'index' ? '' : legacy[1]) + (legacy[2] || '');
+    return '/';
+  }
+
 
   /* ── posters ─────────────────────────────────────────────── */
 
@@ -244,7 +256,7 @@ window.CV = (function () {
 
 
   var CV = {
-    $: $, $$: $$, esc: esc, num: num, money: money, iso: iso, param: param, reduced: reduced,
+    $: $, $$: $$, esc: esc, num: num, money: money, iso: iso, param: param, safeNext: safeNext, reduced: reduced,
     dateKey: dateKey, clock: clock, shortDate: shortDate, longDate: longDate,
     runtime: runtime, genreText: genreText,
     poster: poster, hues: hues,
