@@ -130,6 +130,20 @@ TEST_DB=postgres POSTGRES_HOST=localhost POSTGRES_PASSWORD=... python manage.py 
 The production setup runs six containers with Docker Compose. The step-by-step guide,
 including HTTPS, backups and updates, is in [DEPLOY.md](DEPLOY.md).
 
+## Known limitations
+
+- **Reopening checkout creates a new Stripe PaymentIntent.** The payment record keeps only
+  the latest one, so a payment made on an earlier intent (for example in a second tab) is
+  not matched to the booking. Reusing the pending intent is the planned fix.
+- **Late payments are refunded by hand.** A payment that arrives after the 10-minute hold
+  has expired is logged for a manual refund instead of being refunded automatically
+  ([#8](https://github.com/sanjarbek-ashurboyev/Cinevault/issues/8)).
+- **Showtimes are not checked for overlaps.** Nothing stops two showtimes being scheduled in
+  the same hall at the same time, or an end time that is before the start time.
+- **Prices are whole numbers.** Showtime prices and reservation totals have no cents
+  ([#6](https://github.com/sanjarbek-ashurboyev/Cinevault/issues/6)).
+- **List endpoints are not paginated** ([#4](https://github.com/sanjarbek-ashurboyev/Cinevault/issues/4)).
+
 ## License
 
 [MIT](LICENSE)
