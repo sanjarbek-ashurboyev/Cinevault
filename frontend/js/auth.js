@@ -39,11 +39,14 @@
   var next = CV.param('next', '');
 
   /* An open redirect would let a crafted link bounce a freshly signed-in
-     visitor to another site, so only same-directory pages are honoured. */
+     visitor to another site, so only this site's own pages are honoured:
+     a single path segment like /tickets, never //host or a scheme. Old
+     links still carry next=tickets.html, which maps onto the clean path. */
   function safeNext() {
-    if (!next) return 'index.html';
-    if (/^[a-z0-9_-]+\.html(\?[^#]*)?$/i.test(next)) return next;
-    return 'index.html';
+    if (/^\/[a-z0-9_-]*(\?[^#]*)?$/i.test(next)) return next;
+    var legacy = /^([a-z0-9_-]+)\.html(\?[^#]*)?$/i.exec(next);
+    if (legacy) return '/' + (legacy[1] === 'index' ? '' : legacy[1]) + (legacy[2] || '');
+    return '/';
   }
 
   var COPY = {
@@ -187,7 +190,7 @@
     }).then(function () {
       /* The account exists but cannot book yet: reservations sit behind
          the IsVerified permission, so the next stop is the code screen. */
-      location.href = 'verify.html?email=' + encodeURIComponent(address) +
+      location.href = '/verify?email=' + encodeURIComponent(address) +
                       (next ? '&next=' + encodeURIComponent(next) : '');
     }, function (e2) {
       busy(false);

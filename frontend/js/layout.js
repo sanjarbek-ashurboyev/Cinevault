@@ -16,9 +16,10 @@
   var API = window.CV_API;
 
   /* Which nav link to mark active. Pages set data-page on <body>;
-     falling back to the filename keeps 404.html working. */
+     falling back to the path keeps 404.html working, whether it was
+     reached as /movies or as an old /movies.html link. */
   var page = document.body.getAttribute('data-page') ||
-             (location.pathname.split('/').pop() || 'index.html').replace('.html', '');
+             (location.pathname.split('/').pop() || 'index').replace('.html', '');
 
   var tab = new URLSearchParams(location.search).get('tab');
 
@@ -40,17 +41,17 @@
       '<div class="nav__inner">' +
         '<button class="nav__burger" id="burger" aria-label="Open menu"><svg><use href="#i-menu"/></svg></button>' +
 
-        '<a href="index.html" class="logo" aria-label="CineVault home">CINE<span>VAULT</span></a>' +
+        '<a href="/" class="logo" aria-label="CineVault home">CINE<span>VAULT</span></a>' +
 
         '<ul class="nav__links">' +
-          '<li><a href="movies.html"' + active('movies', false) + '>Now Showing</a></li>' +
-          '<li><a href="movies.html?tab=soon"' + active('movies', true) + '>Coming Soon</a></li>' +
-          '<li><a href="cinemas.html"' + active('cinemas') + '>Cinemas</a></li>' +
+          '<li><a href="/movies"' + active('movies', false) + '>Now Showing</a></li>' +
+          '<li><a href="/movies?tab=soon"' + active('movies', true) + '>Coming Soon</a></li>' +
+          '<li><a href="/cinemas"' + active('cinemas') + '>Cinemas</a></li>' +
           /* Only for signed-in visitors: GET /reservations/ is
              IsAuthenticated, so the page would only bounce anyone else
              straight to the sign-in form. */
           (API.isLoggedIn()
-            ? '<li><a href="tickets.html"' + active('tickets') + '>My Bookings</a></li>'
+            ? '<li><a href="/tickets"' + active('tickets') + '>My Bookings</a></li>'
             : '') +
         '</ul>' +
 
@@ -69,13 +70,13 @@
     '<div class="drawer" id="drawer" aria-hidden="true">' +
       '<div class="drawer__panel">' +
         '<div class="drawer__top">' +
-          '<a href="index.html" class="logo" aria-label="CineVault home">CINE<span>VAULT</span></a>' +
+          '<a href="/" class="logo" aria-label="CineVault home">CINE<span>VAULT</span></a>' +
           '<button class="icon-btn" id="drawerClose" aria-label="Close menu"><svg><use href="#i-close"/></svg></button>' +
         '</div>' +
-        '<a href="movies.html">Now Showing</a>' +
-        '<a href="movies.html?tab=soon">Coming Soon</a>' +
-        '<a href="cinemas.html">Cinemas</a>' +
-        (API.isLoggedIn() ? '<a href="tickets.html">My Bookings</a>' : '') +
+        '<a href="/movies">Now Showing</a>' +
+        '<a href="/movies?tab=soon">Coming Soon</a>' +
+        '<a href="/cinemas">Cinemas</a>' +
+        (API.isLoggedIn() ? '<a href="/tickets">My Bookings</a>' : '') +
         '<div id="authSlotDrawer"></div>' +
       '</div>' +
     '</div>';
@@ -85,24 +86,24 @@
     '<footer class="foot">' +
       '<div class="wrap foot__in">' +
         '<div class="foot__brand">' +
-          '<a href="index.html" class="logo">CINE<span>VAULT</span></a>' +
+          '<a href="/" class="logo">CINE<span>VAULT</span></a>' +
           '<p>Browse what is on, pick your seat and pay in seconds.</p>' +
         '</div>' +
         '<div class="foot__col">' +
           '<h4>Browse</h4>' +
-          '<a href="movies.html">Now Showing</a>' +
-          '<a href="movies.html?tab=soon">Coming Soon</a>' +
-          '<a href="movies.html?sort=rating">Top Rated</a>' +
+          '<a href="/movies">Now Showing</a>' +
+          '<a href="/movies?tab=soon">Coming Soon</a>' +
+          '<a href="/movies?sort=rating">Top Rated</a>' +
         '</div>' +
         '<div class="foot__col">' +
           '<h4>Cinemas</h4>' +
-          '<a href="cinemas.html">Find a cinema</a>' +
+          '<a href="/cinemas">Find a cinema</a>' +
         '</div>' +
         '<div class="foot__col">' +
           '<h4>Account</h4>' +
-          '<a href="signin.html">Sign in</a>' +
-          '<a href="signin.html?mode=up">Create account</a>' +
-          '<a href="tickets.html">My bookings</a>' +
+          '<a href="/signin">Sign in</a>' +
+          '<a href="/signin?mode=up">Create account</a>' +
+          '<a href="/tickets">My bookings</a>' +
         '</div>' +
       '</div>' +
       '<div class="foot__bar">' +
@@ -135,9 +136,9 @@
     if (!slot) return;
 
     if (!API.isLoggedIn()) {
-      slot.innerHTML = '<a href="signin.html" class="btn btn--accent btn--sm">' +
+      slot.innerHTML = '<a href="/signin" class="btn btn--accent btn--sm">' +
                        '<svg><use href="#i-user"/></svg>Sign In</a>';
-      if (dslot) dslot.innerHTML = '<a href="signin.html" class="btn btn--accent drawer__cta">' +
+      if (dslot) dslot.innerHTML = '<a href="/signin" class="btn btn--accent drawer__cta">' +
                                    '<svg><use href="#i-user"/></svg>Sign In</a>';
       return;
     }
@@ -147,7 +148,7 @@
       : 'My account';
 
     var warn = profile && profile.is_verified === false
-      ? '<a href="verify.html?email=' + encodeURIComponent(profile.email) +
+      ? '<a href="/verify?email=' + encodeURIComponent(profile.email) +
         '" class="authslot__warn" title="Verify your email to book">Verify email</a>'
       : '';
 
@@ -163,7 +164,7 @@
     [document.getElementById('signOut'), document.getElementById('signOutD')].forEach(function (b) {
       if (b) b.addEventListener('click', function () {
         API.logout();
-        location.href = 'index.html';
+        location.href = '/';
       });
     });
   }

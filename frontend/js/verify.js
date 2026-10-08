@@ -69,8 +69,8 @@
 
       var link = $('#verifyDoneLink');
       link.href = API.isLoggedIn()
-        ? (next || 'index.html')
-        : 'signin.html' + (next ? '?next=' + encodeURIComponent(next) : '');
+        ? (next || '/')
+        : '/signin' + (next ? '?next=' + encodeURIComponent(next) : '');
       link.textContent = API.isLoggedIn() ? 'Continue' : 'Sign in';
 
       /* the nav badge is driven by is_verified, so refresh it */
