@@ -10,7 +10,7 @@
 
   CV.loading(grid, 'Loading films…');
 
-  CAT.load().then(render, function (err) {
+  CAT.load({ upcoming: true }).then(render, function (err) {
     CV.failed(grid, err, 'Retry');
     CV.failed(soonGrid, err);
     var hero = $('#heroInner');

@@ -160,24 +160,37 @@ window.CV_API = (function () {
      Every page here builds its view from the whole list (the catalogue
      joins all movies to all showtimes in the browser), so stopping at
      page one would quietly drop films. This follows the pages until
-     `next` runs out, at the server's maximum page size of 100. */
+     `next` runs out, at the server's maximum page size of 100.
+
+     Page one's `count` says how many pages there are, so the rest are
+     requested together rather than one after another — walking `next`
+     made a nine-page list cost nine round trips back to back. */
   var PAGE_SIZE = 100;
 
   function allPages(path, params) {
-    var query = {};
-    Object.keys(params || {}).forEach(function (k) { query[k] = params[k]; });
-    query.page_size = PAGE_SIZE;
-    var collected = [];
-
     function fetchPage(page) {
+      var query = {};
+      Object.keys(params || {}).forEach(function (k) { query[k] = params[k]; });
+      query.page_size = PAGE_SIZE;
       query.page = page;
-      return send('GET', path + qs(query)).then(function (payload) {
-        if (Array.isArray(payload)) return payload;
-        collected = collected.concat((payload && payload.results) || []);
-        return payload && payload.next ? fetchPage(page + 1) : collected;
-      });
+      return send('GET', path + qs(query));
     }
-    return fetchPage(1);
+
+    return fetchPage(1).then(function (first) {
+      if (Array.isArray(first)) return first;
+      var results = (first && first.results) || [];
+      if (!first || !first.next) return results;
+
+      var pages = Math.ceil(first.count / PAGE_SIZE);
+      var rest = [];
+      for (var p = 2; p <= pages; p++) rest.push(fetchPage(p));
+
+      return Promise.all(rest).then(function (payloads) {
+        return payloads.reduce(function (all, payload) {
+          return all.concat((payload && payload.results) || []);
+        }, results);
+      });
+    });
   }
 
 
