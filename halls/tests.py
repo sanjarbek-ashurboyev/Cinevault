@@ -11,7 +11,7 @@ class HallTests(TestCase):
     def test_anyone_can_list_halls(self):
         response = APIClient().get('/api/v1/halls/')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['results']), 1)
 
     def test_raw_seat_list_is_for_superusers_only(self):
         # Customers see seats through the showtime seat map, which includes booking status.
@@ -20,4 +20,4 @@ class HallTests(TestCase):
         self.assertEqual(client_for(make_user()).get(url).status_code, 403)
 
         admin = make_user(email='admin@example.com', is_superuser=True, is_staff=True)
-        self.assertEqual(len(client_for(admin).get(url).data), 6)
+        self.assertEqual(len(client_for(admin).get(url).data['results']), 6)

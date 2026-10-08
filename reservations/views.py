@@ -26,7 +26,7 @@ class ReservationListCreateAPIView(ListCreateAPIView):
             .filter(user=self.request.user)
             .select_related('showtime')
             .prefetch_related('seats__seat')
-            .order_by('-created_at')
+            .order_by('-created_at', '-id')
         )
 
 

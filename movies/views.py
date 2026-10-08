@@ -18,7 +18,8 @@ from permissions import IsSuperUser
 # Create your views here.
 @extend_schema(tags=['movies'])
 class MoviesListAPIView(ListAPIView):
-    queryset = Movie.objects.all()
+    # The serializer nests each movie's genres; without the prefetch that is a query per movie.
+    queryset = Movie.objects.prefetch_related('genres').order_by('-release_date', '-id')
     serializer_class = MovieSerializer
     permission_classes = [AllowAny]
     filter_backends = [SearchFilter, DjangoFilterBackend]
@@ -28,7 +29,7 @@ class MoviesListAPIView(ListAPIView):
 
 @extend_schema(tags=['movies'])
 class MoviesDetailAPIView(RetrieveUpdateDestroyAPIView):
-    queryset = Movie.objects.all()
+    queryset = Movie.objects.prefetch_related('genres')
     serializer_class = MovieSerializer
     lookup_url_kwarg = 'id'
     http_method_names = ['get', 'put', 'delete']
@@ -52,7 +53,7 @@ class MovieCreateAPIView(CreateAPIView):
 
 @extend_schema(tags=['movies'])
 class GenresListView(ListCreateAPIView):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.order_by('name')
     serializer_class = GenreSerializer
 
     def get_permissions(self):

@@ -8,7 +8,7 @@ from django.test import TestCase
 from payments.models import Payment
 from reservations.models import Reservation, ReservationSeat
 from reservations.tasks import cancel_reservation_if_unpaid, send_reservation_ticket
-from test_helpers import client_for, make_hall, make_showtime, make_user
+from test_helpers import client_for, count_queries, make_hall, make_showtime, make_user
 from utils import seat_lock_key
 
 URL = '/api/v1/reservations/'
@@ -118,8 +118,8 @@ class ReservationAccessTests(TestCase):
 
     def test_list_shows_only_my_reservations(self):
         stranger = make_user(email='stranger@example.com')
-        self.assertEqual([r['id'] for r in client_for(self.owner).get(URL).data], [self.reservation.id])
-        self.assertEqual(client_for(stranger).get(URL).data, [])
+        self.assertEqual([r['id'] for r in client_for(self.owner).get(URL).data['results']], [self.reservation.id])
+        self.assertEqual(client_for(stranger).get(URL).data['results'], [])
 
     def test_owner_can_see_their_reservation(self):
         response = client_for(self.owner).get(f'{URL}{self.reservation.id}/')
@@ -220,3 +220,19 @@ class TicketEmailTaskTests(TestCase):
         with self.assertLogs('reservations.tasks', 'ERROR'):
             send_reservation_ticket(self.reservation.id)
         self.assertEqual(mail.outbox, [])
+
+
+class ReservationListQueryTests(TestCase):
+    def test_query_count_does_not_grow_with_reservations_or_seats(self):
+        user = make_user()
+        client = client_for(user)
+        showtime = make_showtime(hall=make_hall(rows=4, per_row=5))
+        seats = list(showtime.hall.seats.all())
+        book(user, showtime, seats[:1])
+        few = count_queries(lambda: client.get(URL))
+
+        for n in range(1, 6):
+            book(user, showtime, seats[n * 3:n * 3 + 3])
+        response_queries = count_queries(lambda: client.get(URL))
+        self.assertEqual(response_queries, few)
+        self.assertEqual(len(client.get(URL).data['results']), 6)

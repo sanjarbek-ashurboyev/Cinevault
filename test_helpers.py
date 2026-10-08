@@ -1,6 +1,8 @@
 """Shared builders for the test suite."""
 from datetime import date, timedelta
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -38,6 +40,24 @@ def make_showtime(hall=None, price=20, starts_in=timedelta(days=1)):
     return Showtime.objects.create(
         movie=movie, hall=hall, start_time=start, end_time=start + timedelta(hours=2), price=price,
     )
+
+
+
+def make_movie(title='Test Film', genres=()):
+    movie = Movie.objects.create(
+        title=title, description='A film.', duration_minutes=120,
+        release_date=date(2026, 1, 1), age_rating=Movie.AgeRating.PG13,
+    )
+    movie.genres.set(genres)
+    return movie
+
+
+def count_queries(request):
+    """How many SQL queries `request()` runs."""
+    with CaptureQueriesContext(connection) as queries:
+        response = request()
+    assert response.status_code == 200, response.status_code
+    return len(queries)
 
 
 class FakeRedis:

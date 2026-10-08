@@ -10,7 +10,7 @@ from permissions import IsSuperUser
 # Create your views here.
 @extend_schema(tags=['halls'])
 class HallsListAPIView(ListCreateAPIView):
-    queryset = Hall.objects.all()
+    queryset = Hall.objects.order_by('id')
     serializer_class = HallSerializer
 
     def get_permissions(self):

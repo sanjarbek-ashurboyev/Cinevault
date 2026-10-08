@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 
 from reservations.models import Reservation, ReservationSeat
 from showtimes.models import Showtime
-from test_helpers import client_for, make_showtime, make_user
+from test_helpers import client_for, count_queries, make_hall, make_showtime, make_user
 
 
 class SeatMapTests(TestCase):
@@ -53,7 +53,7 @@ class ShowtimeListTests(TestCase):
         day = timezone.localtime(today.start_time).date().isoformat()
         response = APIClient().get('/api/v1/showtimes/', {'start_time': day})
 
-        self.assertEqual([s['id'] for s in response.data], [today.id])
+        self.assertEqual([s['id'] for s in response.data['results']], [today.id])
 
     def test_only_superusers_can_create_showtimes(self):
         existing = make_showtime()
@@ -65,3 +65,24 @@ class ShowtimeListTests(TestCase):
         admin = make_user(email='admin@example.com', is_superuser=True, is_staff=True)
         self.assertEqual(client_for(admin).post('/api/v1/showtimes/', data).status_code, 201)
         self.assertEqual(Showtime.objects.count(), 2)
+
+
+class ShowtimeQueryTests(TestCase):
+    def test_list_query_count_does_not_grow_with_the_number_of_showtimes(self):
+        hall = make_hall()
+        make_showtime(hall=hall)
+        few = count_queries(lambda: APIClient().get('/api/v1/showtimes/'))
+        for n in range(10):
+            make_showtime(hall=hall, starts_in=timedelta(days=n + 2))
+        self.assertEqual(count_queries(lambda: APIClient().get('/api/v1/showtimes/')), few)
+
+    def test_seat_map_query_count_does_not_grow_with_bookings(self):
+        showtime = make_showtime()
+        url = f'/api/v1/showtimes/{showtime.id}/seats/'
+        few = count_queries(lambda: APIClient().get(url))
+        for n, seat in enumerate(showtime.hall.seats.all()):
+            reservation = Reservation.objects.create(
+                user=make_user(email=f'u{n}@example.com'), showtime=showtime, total_price=20,
+            )
+            ReservationSeat.objects.create(reservation=reservation, seat=seat, showtime=showtime)
+        self.assertEqual(count_queries(lambda: APIClient().get(url)), few)
