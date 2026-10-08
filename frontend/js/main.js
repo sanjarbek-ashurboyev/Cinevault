@@ -318,7 +318,7 @@ window.CV = (function () {
       e.preventDefault();
       /* the listing filters live, so stay put there */
       if ($('#grid')) return;
-      location.href = 'movies.html?q=' + encodeURIComponent(q.value.trim());
+      location.href = '/movies?q=' + encodeURIComponent(q.value.trim());
     });
   }
 

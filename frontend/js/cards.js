@@ -13,7 +13,7 @@ window.CV_CARDS = (function () {
      all hang off it server-side, so nothing has to be passed along in
      the query string and nothing can go stale. */
   function timeChip(s) {
-    return '<a class="time" href="seats.html?showtime=' + s.id + '">' + esc(CV.clock(s.start_time)) + '</a>';
+    return '<a class="time" href="/seats?showtime=' + s.id + '">' + esc(CV.clock(s.start_time)) + '</a>';
   }
 
   function timeChips(movie, isoDate, limit) {
@@ -27,7 +27,7 @@ window.CV_CARDS = (function () {
     var html = shown.map(timeChip).join('');
 
     if (list.length > shown.length) {
-      html += '<a class="time time--more" href="movie.html?id=' + movie.id + '">+' +
+      html += '<a class="time time--more" href="/movie?id=' + movie.id + '">+' +
               (list.length - shown.length) + '</a>';
     }
     return html;
@@ -35,7 +35,7 @@ window.CV_CARDS = (function () {
 
   function posterWithBook(m) {
     return CV.poster(m, false).replace(/<\/div>$/,
-      '<div class="poster__over"><a class="btn btn--accent btn--sm" href="movie.html?id=' + m.id +
+      '<div class="poster__over"><a class="btn btn--accent btn--sm" href="/movie?id=' + m.id +
       '"><svg><use href="#i-ticket"/></svg>Book</a></div></div>');
   }
 
@@ -54,7 +54,7 @@ window.CV_CARDS = (function () {
     return '<article class="mcard reveal" data-film="' + esc(m.title) + '">' +
       posterWithBook(m) +
       '<div class="mcard__b">' +
-        '<h3><a href="movie.html?id=' + m.id + '">' + esc(m.title) + '</a></h3>' +
+        '<h3><a href="/movie?id=' + m.id + '">' + esc(m.title) + '</a></h3>' +
         '<p class="mcard__m">' + meta(m) + '</p>' +
         '<p class="mcard__lab"><svg><use href="#i-clock"/></svg>Showtimes</p>' +
         '<div class="times">' + timeChips(m, isoDate, 4) + '</div>' +
@@ -73,11 +73,11 @@ window.CV_CARDS = (function () {
     return '<article class="scard reveal">' +
       CV.poster(m, true) +
       '<div class="scard__b">' +
-        '<h3><a href="movie.html?id=' + m.id + '">' + esc(m.title) + '</a></h3>' +
+        '<h3><a href="/movie?id=' + m.id + '">' + esc(m.title) + '</a></h3>' +
         '<p class="mcard__m">' + meta(m) + '</p>' +
         when +
         '<div class="scard__act">' +
-          '<a class="btn btn--ghost btn--sm btn--full" href="movie.html?id=' + m.id + '">' +
+          '<a class="btn btn--ghost btn--sm btn--full" href="/movie?id=' + m.id + '">' +
           '<svg><use href="#i-film"/></svg>View details</a>' +
         '</div>' +
       '</div>' +

@@ -26,7 +26,7 @@
      a 401 and an error panel. Sending them to sign in first — and back
      here afterwards — is the same bounce the checkout page does. */
   if (!API.isLoggedIn()) {
-    location.href = 'signin.html?next=' + encodeURIComponent('tickets.html');
+    location.href = '/signin?next=' + encodeURIComponent('/tickets');
     return;
   }
 
@@ -143,7 +143,7 @@
       if (msg && !shown.length) {
         msg.innerHTML = rows.length
           ? 'No bookings under that filter.'
-          : 'Nothing here yet. <a href="movies.html" style="color:var(--accent)">Pick a film</a> ' +
+          : 'Nothing here yet. <a href="/movies" style="color:var(--accent)">Pick a film</a> ' +
             'and your bookings will show up on this page.';
       }
     }
@@ -218,7 +218,7 @@
 
   function actions(r) {
     if (r.status === 'confirmed') {
-      return '<a class="btn btn--ghost btn--sm" href="confirmation.html?id=' + r.id + '">' +
+      return '<a class="btn btn--ghost btn--sm" href="/confirmation?id=' + r.id + '">' +
              '<svg><use href="#i-ticket"/></svg>View ticket</a>';
     }
     if (r.status === 'pending' && !r.holdExpired) {
@@ -226,7 +226,7 @@
              '<svg><use href="#i-lock"/></svg>Pay now</button>';
     }
     if (r.movie) {
-      return '<a class="btn btn--ghost btn--sm" href="movie.html?id=' + r.movie.id + '">' +
+      return '<a class="btn btn--ghost btn--sm" href="/movie?id=' + r.movie.id + '">' +
              '<svg><use href="#i-film"/></svg>Book again</a>';
     }
     return '';
@@ -253,7 +253,7 @@
       status: r.status,
       createdAt: r.createdAt
     });
-    location.href = 'checkout.html';
+    location.href = '/checkout';
   }
 
 

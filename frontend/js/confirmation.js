@@ -2,9 +2,9 @@
    CineVault — confirmation / a single ticket.
 
    Two ways in:
-     confirmation.html            — straight out of checkout, rendered
+     /confirmation                — straight out of checkout, rendered
                                     from the booking draft in this tab
-     confirmation.html?id=<id>    — opened from My Bookings, rendered
+     /confirmation?id=<id>        — opened from My Bookings, rendered
                                     from GET /reservations/<id>/
 
    Either way the ticket's status is re-read from the API once it is on

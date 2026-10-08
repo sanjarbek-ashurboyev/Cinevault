@@ -14,6 +14,7 @@ internet: it is the stdlib static server with one header added.
 """
 
 import argparse
+import os
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -26,6 +27,14 @@ class NoCacheHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cache-Control", "no-store, must-revalidate")
         super().end_headers()
+
+    # The site links to /movies rather than /movies.html; nginx resolves that
+    # with try_files $uri $uri.html, and this does the same locally.
+    def translate_path(self, path):
+        fs_path = super().translate_path(path)
+        if not os.path.exists(fs_path) and os.path.isfile(fs_path + ".html"):
+            return fs_path + ".html"
+        return fs_path
 
 
 def main():

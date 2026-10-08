@@ -40,12 +40,12 @@
       '<div class="empty is-on" style="grid-column:1/-1">' +
       '<svg><use href="#i-seat"/></svg>' +
       '<p>You have not reserved any seats yet. ' +
-      '<a href="movies.html" style="color:var(--accent)">Choose a screening</a> to start a booking.</p></div>';
+      '<a href="/movies" style="color:var(--accent)">Choose a screening</a> to start a booking.</p></div>';
     return;
   }
 
   if (!API.isLoggedIn()) {
-    location.href = 'signin.html?next=' + encodeURIComponent('checkout.html');
+    location.href = '/signin?next=' + encodeURIComponent('/checkout');
     return;
   }
 
@@ -60,7 +60,7 @@
     $('#rTotal').textContent = CV.money(booking.total);
   }
 
-  $('#backSeats').href = 'seats.html?showtime=' + booking.showtimeId;
+  $('#backSeats').href = '/seats?showtime=' + booking.showtimeId;
 
 
   /* ── the ten-minute hold ─────────────────────────────────── */
@@ -228,7 +228,7 @@
         booking.email = $('#c-email').value.trim();
         booking.paidAt = new Date().toISOString();
         CV.saveBooking(booking);
-        location.href = 'confirmation.html';
+        location.href = '/confirmation';
         return;
       }
 

@@ -76,7 +76,7 @@
 
     var crumb = $('#crumbFilm');
     crumb.textContent = movie.title;
-    crumb.href = 'movie.html?id=' + movie.id;
+    crumb.href = '/movie?id=' + movie.id;
 
     /* One price per screening — Showtime.price is the whole story, so
        the old standard/premium/recliner legend has nothing to describe. */
@@ -220,10 +220,10 @@
     if (!chosen.length) return;
     CV.hideMsg(err);
 
-    var here = 'seats.html?showtime=' + showtime.id;
+    var here = '/seats?showtime=' + showtime.id;
 
     if (!API.isLoggedIn()) {
-      location.href = 'signin.html?next=' + encodeURIComponent(here);
+      location.href = '/signin?next=' + encodeURIComponent(here);
       return;
     }
 
@@ -238,18 +238,18 @@
         b.status = reservation.status;
         b.createdAt = reservation.created_at;
         CV.saveBooking(b);
-        location.href = 'checkout.html';
+        location.href = '/checkout';
       }, function (e2) {
         resetGo();
 
         /* IsVerified answers with its own message; send them where they
            can actually fix it rather than repeating the refusal. */
         if (e2.status === 403 && /verif/i.test(e2.message || '')) {
-          location.href = 'verify.html?next=' + encodeURIComponent(here);
+          location.href = '/verify?next=' + encodeURIComponent(here);
           return;
         }
         if (e2.status === 401) {
-          location.href = 'signin.html?next=' + encodeURIComponent(here);
+          location.href = '/signin?next=' + encodeURIComponent(here);
           return;
         }
 

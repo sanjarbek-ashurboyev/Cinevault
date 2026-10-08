@@ -119,7 +119,7 @@
       '</div>' +
       '<div class="venue-card__go">' +
         (v.price != null ? '<small>from ' + CV.money(v.price) + '</small>' : '<small>—</small>') +
-        '<a class="btn btn--accent btn--sm" href="movies.html?hall=' + v.id + '">' +
+        '<a class="btn btn--accent btn--sm" href="/movies?hall=' + v.id + '">' +
           '<svg><use href="#i-ticket"/></svg>Showtimes</a>' +
       '</div>' +
     '</article>';

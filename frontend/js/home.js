@@ -117,7 +117,7 @@
 
       $('#heroDesc').textContent = m.description || '';
 
-      $('#heroBook').href = 'movie.html?id=' + m.id;
+      $('#heroBook').href = '/movie?id=' + m.id;
 
       /* Trailer is a real URL on the model — open it, or hide the
          button entirely rather than offer a dead control. */
@@ -233,9 +233,9 @@
 
       /* one film chosen → straight to its showtimes */
       if (mSel.value) {
-        location.href = 'movie.html?id=' + mSel.value + (dInp.value ? '&date=' + dInp.value : '');
+        location.href = '/movie?id=' + mSel.value + (dInp.value ? '&date=' + dInp.value : '');
       } else {
-        location.href = 'movies.html' + (p.toString() ? '?' + p.toString() : '');
+        location.href = '/movies' + (p.toString() ? '?' + p.toString() : '');
       }
     });
   }
