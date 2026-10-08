@@ -84,22 +84,32 @@ window.CV_CARDS = (function () {
     '</article>';
   }
 
-  /* the seven-day strip used on the home page and the detail page */
+  /* the seven-day strip used on the home page and the detail page.
+     `startIso` picks which day opens selected; anything outside the
+     strip falls back to today. */
   var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  function buildDates(el, onPick, span) {
+  function buildDates(el, onPick, span, startIso) {
     if (!el) return;
     span = span || 7;
 
     var today = new Date();
     var html = '';
+    var days = [];
 
     for (var i = 0; i < span; i++) {
       var d = new Date(today);
       d.setDate(today.getDate() + i);
+      days.push(d);
+    }
 
-      html += '<button class="date' + (i === 0 ? ' is-on' : '') + '" type="button" role="tab"' +
-              ' aria-selected="' + (i === 0) + '" data-iso="' + CV.iso(d) + '">' +
+    var isos = days.map(CV.iso);
+    var picked = Math.max(0, isos.indexOf(startIso));
+
+    for (i = 0; i < span; i++) {
+      d = days[i];
+      html += '<button class="date' + (i === picked ? ' is-on' : '') + '" type="button" role="tab"' +
+              ' aria-selected="' + (i === picked) + '" data-iso="' + isos[i] + '">' +
               '<small>' + (i === 0 ? 'Today' : DAYS[d.getDay()]) + '</small>' +
               '<b>' + d.getDate() + '</b></button>';
     }
@@ -118,7 +128,7 @@ window.CV_CARDS = (function () {
       onPick(b.dataset.iso);
     });
 
-    onPick(CV.iso(today));
+    onPick(isos[picked]);
   }
 
   return {

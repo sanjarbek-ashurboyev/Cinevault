@@ -263,7 +263,16 @@
       CV.reveal(grid);
     }
 
-    CARDS.buildDates(datesEl, draw);
+    /* Open on the first day that has a screening, so a late-evening
+       visitor whose last show of the day has started sees tomorrow's
+       films rather than an empty grid. */
+    var firstDay = showing
+      .map(function (m) { return m._upcoming[0]; })
+      .filter(Boolean)
+      .map(function (s) { return CV.dateKey(s.start_time); })
+      .sort()[0];
+
+    CARDS.buildDates(datesEl, draw, 7, firstDay);
   }
 
 
