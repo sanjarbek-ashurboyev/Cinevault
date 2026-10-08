@@ -73,6 +73,9 @@ Payments, seat holds and emails all run through Celery and Redis.
 Only Caddy is exposed to the internet. PostgreSQL, Redis and Gunicorn are reachable only
 inside the Docker network.
 
+Why it's built this way (double booking, the webhook vs. hold-expiry race, idempotent
+payments) is in [DESIGN.md](DESIGN.md).
+
 ## API overview
 
 All endpoints live under `/api/v1/`. Full docs are at `/swagger/` when running locally.
