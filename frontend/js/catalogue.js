@@ -15,14 +15,20 @@ window.CV_CAT = (function () {
   'use strict';
 
   var API = window.CV_API;
-  var cache = null;
+  var caches = {};
 
-  function load() {
-    if (cache) return cache;
+  /* opts.upcoming asks the API for screenings that have not started yet,
+     which is all the listing pages ever show. The full history is only
+     for pages that look up a past booking's showtime (tickets,
+     confirmation), so they call load() without it. */
+  function load(opts) {
+    var upcoming = !!(opts && opts.upcoming);
+    var key = upcoming ? 'upcoming' : 'all';
+    if (caches[key]) return caches[key];
 
-    cache = Promise.all([
+    var cache = caches[key] = Promise.all([
       API.movies(),
-      API.showtimes(),
+      API.showtimes(upcoming ? { start_after: new Date().toISOString() } : undefined),
       /* GET /halls/ is public, but stay standing if it ever closes
          again — hall names are a nicety, not the point of the page. */
       API.halls().catch(function () { return []; })
@@ -65,7 +71,7 @@ window.CV_CAT = (function () {
 
       return { movies: movies, halls: halls, hallById: hallById };
     }).catch(function (err) {
-      cache = null;               // let the next attempt retry properly
+      caches[key] = null;         // let the next attempt retry properly
       throw err;
     });
 

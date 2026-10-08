@@ -38,7 +38,7 @@
 
   CV.loading(grid, 'Loading films…');
 
-  CAT.load().then(function (data) {
+  CAT.load({ upcoming: true }).then(function (data) {
     cat = data;
     paintChips(data);
     paintTabs();

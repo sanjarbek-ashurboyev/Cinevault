@@ -58,6 +58,14 @@ class ShowtimeListTests(TestCase):
 
         self.assertEqual([s['id'] for s in response.data['results']], [today.id])
 
+    def test_start_after_skips_screenings_that_have_begun(self):
+        past = make_showtime(starts_in=-timedelta(hours=3))
+        upcoming = make_showtime(hall=past.hall, starts_in=timedelta(hours=1))
+
+        response = APIClient().get('/api/v1/showtimes/', {'start_after': timezone.now().isoformat()})
+
+        self.assertEqual([s['id'] for s in response.data['results']], [upcoming.id])
+
     def test_only_superusers_can_create_showtimes(self):
         existing = make_showtime()
         start = timezone.now() + timedelta(days=2)

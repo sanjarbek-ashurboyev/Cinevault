@@ -26,7 +26,7 @@
 
   CV.loading(list, 'Loading halls…');
 
-  CAT.load().then(function (cat) {
+  CAT.load({ upcoming: true }).then(function (cat) {
     halls = decorate(cat);
     if (sortEl) sortEl.value = state.sort;
     wire();
