@@ -2,7 +2,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from permissions import IsVerified, IsOwnerOrAdmin
+from permissions import IsOwnerOrAdmin, IsVerified
 from reservations.models import Reservation
 from reservations.serializers import ReservationCreateSerializer, ReservationSerializer
 

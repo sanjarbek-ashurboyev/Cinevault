@@ -1,6 +1,10 @@
 from django.urls import path
 
-from showtimes.views import ShowtimesListAPIView, ShowtimeDetailAPIView, ShowtimeSeatMapView
+from showtimes.views import (
+    ShowtimeDetailAPIView,
+    ShowtimeSeatMapView,
+    ShowtimesListAPIView,
+)
 
 urlpatterns = [
     path('showtimes/', ShowtimesListAPIView.as_view()),

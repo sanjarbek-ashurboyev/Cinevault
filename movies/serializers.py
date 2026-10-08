@@ -1,7 +1,7 @@
 from rest_framework.relations import PrimaryKeyRelatedField
 from rest_framework.serializers import ModelSerializer
 
-from movies.models import Movie, Genre
+from movies.models import Genre, Movie
 
 
 class GenreSerializer(ModelSerializer):

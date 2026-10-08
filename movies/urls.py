@@ -1,7 +1,11 @@
 from django.urls import path
-from rest_framework.views import APIView
 
-from movies.views import MoviesListAPIView, MoviesDetailAPIView, MovieCreateAPIView, GenresListView
+from movies.views import (
+    GenresListView,
+    MovieCreateAPIView,
+    MoviesDetailAPIView,
+    MoviesListAPIView,
+)
 
 urlpatterns = [
     path('movies/', MoviesListAPIView.as_view()),

@@ -7,7 +7,11 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.models import User
-from accounts.utils import failed_attempt_limit_reached, redis_client, reset_failed_attempts
+from accounts.utils import (
+    failed_attempt_limit_reached,
+    redis_client,
+    reset_failed_attempts,
+)
 
 
 class RegisterSerializer(ModelSerializer):
@@ -91,14 +95,14 @@ class LogoutSerializer(Serializer):
         try:
             self.token = RefreshToken(value)
         except TokenError:
-            raise ValidationError('Invalid or expired refresh token')
+            raise ValidationError('Invalid or expired refresh token') from None
         return value
 
     def save(self, **kwargs):
         try:
             self.token.blacklist()
         except TokenError:
-            raise ValidationError('Token is already blacklisted')
+            raise ValidationError('Token is already blacklisted') from None
 
 
 

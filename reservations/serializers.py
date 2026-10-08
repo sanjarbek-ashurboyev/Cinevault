@@ -1,14 +1,15 @@
 from django.core.cache import cache
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import ListField, IntegerField
+from rest_framework.fields import IntegerField, ListField
 from rest_framework.serializers import ModelSerializer
 
 from halls.models import Seat
 from halls.serializers import SeatSerializer
 from reservations.models import Reservation, ReservationSeat
 from utils import seat_lock_key
+
 from .tasks import cancel_reservation_if_unpaid
 
 SEAT_LOCK_TTL = 600
@@ -91,7 +92,7 @@ class ReservationCreateSerializer(ModelSerializer):
             cache.delete_many(acquired_keys)
             raise ValidationError(
                 "One or more seats were just booked by someone else. Please choose different seats."
-            )
+            ) from None
 
         # DB commit succeeded — the ReservationSeat rows themselves are now
         # what future validate() calls check, so the Redis lock has done its job.

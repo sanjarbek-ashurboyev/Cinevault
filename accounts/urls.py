@@ -1,9 +1,15 @@
 from django.urls import path
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from accounts.views import RegisterCreateAPIView, VerifyEmailAPIView, ResendVerificationAPIView, \
-    CustomTokenObtainPairView, CustomTokenRefreshView, ProfileAPIView, PasswordResetRequestAPIView, \
-    PasswordResetConfirmAPIView
+from accounts.views import (
+    CustomTokenObtainPairView,
+    CustomTokenRefreshView,
+    PasswordResetConfirmAPIView,
+    PasswordResetRequestAPIView,
+    ProfileAPIView,
+    RegisterCreateAPIView,
+    ResendVerificationAPIView,
+    VerifyEmailAPIView,
+)
 
 urlpatterns = [
     path('auth/register', RegisterCreateAPIView.as_view()),

@@ -1,6 +1,16 @@
-from django.db import models
-from django.db.models import Model, CharField, TextField, ImageField, PositiveIntegerField, ManyToManyField, DateField, \
-    DateTimeField, TextChoices, URLField, DecimalField
+from django.db.models import (
+    CharField,
+    DateField,
+    DateTimeField,
+    DecimalField,
+    ImageField,
+    ManyToManyField,
+    Model,
+    PositiveIntegerField,
+    TextChoices,
+    TextField,
+    URLField,
+)
 
 
 # Create your models here.

@@ -1,5 +1,5 @@
-from django.db import models, transaction
-from django.db.models import Model, ForeignKey, SET_NULL, CASCADE
+from django.db import transaction
+from django.db.models import CASCADE, SET_NULL, ForeignKey, Model
 from django.db.models.enums import TextChoices
 from django.db.models.fields import CharField, DateTimeField, DecimalField
 

@@ -61,7 +61,7 @@ def cancel_reservation_if_unpaid(self, reservation_id):
             'Cannot confirm payment state for reservation %s (%s) — deferring cancellation',
             reservation_id, exc,
         )
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
     if settled:
         logger.info(

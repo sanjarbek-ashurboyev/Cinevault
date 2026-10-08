@@ -1,5 +1,4 @@
-from django.db import models
-from django.db.models import Model, ForeignKey, CASCADE
+from django.db.models import CASCADE, ForeignKey, Model
 from django.db.models.fields import DateTimeField, DecimalField
 
 
