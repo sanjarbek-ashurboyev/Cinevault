@@ -68,9 +68,12 @@
       $('#verifyDone').hidden = false;
 
       var link = $('#verifyDoneLink');
+      /* next comes straight from the address bar, so it goes through the
+         same check as sign-in before it becomes a link. */
+      var dest = CV.safeNext(next);
       link.href = API.isLoggedIn()
-        ? (next || '/')
-        : '/signin' + (next ? '?next=' + encodeURIComponent(next) : '');
+        ? dest
+        : '/signin' + (next ? '?next=' + encodeURIComponent(dest) : '');
       link.textContent = API.isLoggedIn() ? 'Continue' : 'Sign in';
 
       /* the nav badge is driven by is_verified, so refresh it */
