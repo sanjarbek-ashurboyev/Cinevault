@@ -111,9 +111,10 @@ Run `make` with no arguments to see every available command.
 
 ## Tests
 
-80 tests cover registration and email verification, password reset, seat reservation
+96 tests cover registration and email verification, password reset, seat reservation
 (double-booking, concurrent seat locks, the 10-minute hold), the Stripe webhook
 (duplicate events, out-of-order events, payments after the hold expired, failed payments),
+reusing the pending PaymentIntent, pagination, constant query counts on the list endpoints,
 ticket emails, permissions, refusing started showtimes and limits on code guessing. They use
 SQLite and an in-memory cache, with Stripe and Celery mocked, so no services are needed:
 
