@@ -74,20 +74,20 @@ class CreateReservationTests(TestCase):
 
     def test_seat_being_reserved_by_someone_else_right_now_is_refused(self, cancel_task):
         # Another request holds the short-lived lock but has not written its rows yet.
-        cache.add(seat_lock_key(self.showtime, self.seats[1].id), 999)
+        cache.add(seat_lock_key(self.showtime.id, self.seats[1].id), 999)
 
         response = self.reserve([self.seats[0].id, self.seats[1].id])
 
         self.assertEqual(response.status_code, 400)
         self.assertFalse(Reservation.objects.exists())
         self.assertIsNone(
-            cache.get(seat_lock_key(self.showtime, self.seats[0].id)),
+            cache.get(seat_lock_key(self.showtime.id, self.seats[0].id)),
             'locks taken before the conflict must be released',
         )
 
     def test_locks_are_released_after_a_successful_booking(self, cancel_task):
         self.reserve([self.seats[0].id])
-        self.assertIsNone(cache.get(seat_lock_key(self.showtime, self.seats[0].id)))
+        self.assertIsNone(cache.get(seat_lock_key(self.showtime.id, self.seats[0].id)))
 
     def test_seat_from_another_hall_is_refused(self, cancel_task):
         other_seat = make_hall(name='Hall 2').seats.first()

@@ -1,11 +1,14 @@
 from datetime import timedelta
+from unittest import mock, skipUnless
 
+from django.db import IntegrityError, connection, transaction
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from reservations.models import Reservation, ReservationSeat
 from showtimes.models import Showtime
+from showtimes.serializers import ShowtimeSerialer
 from test_helpers import client_for, count_queries, make_hall, make_showtime, make_user
 
 
@@ -86,3 +89,90 @@ class ShowtimeQueryTests(TestCase):
             )
             ReservationSeat.objects.create(reservation=reservation, seat=seat, showtime=showtime)
         self.assertEqual(count_queries(lambda: APIClient().get(url)), few)
+
+
+class ShowtimeScheduleTests(TestCase):
+    """A hall shows one film at a time, and a showtime ends after it starts."""
+
+    def setUp(self):
+        self.existing = make_showtime()  # 2 hours, starting tomorrow
+        self.hall, self.movie = self.existing.hall, self.existing.movie
+        self.admin = client_for(make_user(email='admin@example.com', is_superuser=True, is_staff=True))
+
+    def at(self, hours):
+        return self.existing.start_time + timedelta(hours=hours)
+
+    def body(self, start, end, hall=None):
+        return {'movie': self.movie.id, 'hall': (hall or self.hall).id, 'price': 25,
+                'start_time': start.isoformat(), 'end_time': end.isoformat()}
+
+    def create(self, start, end, hall=None):
+        return self.admin.post('/api/v1/showtimes/', self.body(start, end, hall))
+
+    def test_end_must_be_after_start(self):
+        for end in (self.at(5), self.at(4)):
+            response = self.create(self.at(5), end)
+            self.assertEqual(response.status_code, 400)
+            self.assertIn('end_time', response.data)
+        self.assertEqual(Showtime.objects.count(), 1)
+
+    def test_overlap_in_the_same_hall_is_refused(self):
+        # Starts during, ends during, and wraps the existing 0h-2h show.
+        for start, end in ((1, 3), (-1, 1), (0.5, 1.5), (-1, 3)):
+            response = self.create(self.at(start), self.at(end))
+            self.assertEqual(response.status_code, 400, (start, end))
+            self.assertIn('Hall 1 already shows Test Film', str(response.data))
+        self.assertEqual(Showtime.objects.count(), 1)
+
+    def test_back_to_back_and_other_halls_are_allowed(self):
+        self.assertEqual(self.create(self.at(2), self.at(4)).status_code, 201)
+        self.assertEqual(self.create(self.at(-2), self.at(0)).status_code, 201)
+        self.assertEqual(self.create(self.at(0), self.at(2), hall=make_hall('Hall 2')).status_code, 201)
+
+    def test_editing_checks_other_showtimes_but_not_itself(self):
+        later = make_showtime(hall=self.hall, starts_in=timedelta(days=2))
+        url = f'/api/v1/showtimes/{later.id}'
+        moved = self.admin.put(url, self.body(later.start_time + timedelta(hours=1), later.end_time + timedelta(hours=1)))
+        self.assertEqual(moved.status_code, 200)
+        clashing = self.admin.put(url, self.body(self.at(1), self.at(3)))
+        self.assertEqual(clashing.status_code, 400)
+
+    def test_database_refuses_an_end_before_the_start(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Showtime.objects.create(movie=self.movie, hall=self.hall, price=20, start_time=self.at(5), end_time=self.at(4))
+
+
+@skipUnless(connection.vendor == 'postgresql', 'exclusion constraints need PostgreSQL')
+class ShowtimeOverlapConstraintTests(TestCase):
+    """The database's own guard, for writes that skip the serializer or race it."""
+
+    def setUp(self):
+        self.existing = make_showtime()
+        self.start = self.existing.start_time
+
+    def add(self, start_hours, end_hours, hall=None):
+        return Showtime.objects.create(
+            movie=self.existing.movie, hall=hall or self.existing.hall, price=20,
+            start_time=self.start + timedelta(hours=start_hours), end_time=self.start + timedelta(hours=end_hours),
+        )
+
+    def test_overlap_is_refused_by_the_database(self):
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            self.add(1, 3)
+
+    def test_touching_and_other_halls_pass_the_database(self):
+        self.add(2, 4)
+        self.add(1, 3, hall=make_hall('Hall 2'))
+        self.assertEqual(Showtime.objects.count(), 3)
+
+    def test_a_request_that_slips_past_validation_gets_a_400(self):
+        # What the second of two simultaneous requests sees: its validate() ran before the first one saved.
+        admin = client_for(make_user(email='admin@example.com', is_superuser=True, is_staff=True))
+        body = {'movie': self.existing.movie.id, 'hall': self.existing.hall.id, 'price': 25,
+                'start_time': (self.start + timedelta(hours=1)).isoformat(),
+                'end_time': (self.start + timedelta(hours=3)).isoformat()}
+        with mock.patch.object(ShowtimeSerialer, 'validate', lambda serializer, attrs: attrs):
+            response = admin.post('/api/v1/showtimes/', body)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('just scheduled', str(response.data))
+        self.assertEqual(Showtime.objects.count(), 1)

@@ -111,20 +111,22 @@ Run `make` with no arguments to see every available command.
 
 ## Tests
 
-96 tests cover registration and email verification, password reset, seat reservation
+104 tests cover registration and email verification, password reset, seat reservation
 (double-booking, concurrent seat locks, the 10-minute hold), the Stripe webhook
 (duplicate events, out-of-order events, payments after the hold expired, failed payments),
 reusing the pending PaymentIntent, pagination, constant query counts on the list endpoints,
-ticket emails, permissions, refusing started showtimes and limits on code guessing. They use
-SQLite and an in-memory cache, with Stripe and Celery mocked, so no services are needed:
+ticket emails, permissions, refusing started showtimes, overlapping showtimes in one hall and
+limits on code guessing. They use SQLite and an in-memory cache, with Stripe and Celery
+mocked, so no services are needed:
 
 ```bash
 make test
 ```
 
-Two of them check that the Stripe webhook and the hold-expiry task can't overwrite each
-other when they handle the same reservation at the same moment. That needs real row
-locks, so they are skipped on SQLite and run against PostgreSQL (CI does both):
+Five of them need PostgreSQL, so they are skipped on SQLite and run in a second CI job.
+Two check that the Stripe webhook and the hold-expiry task can't overwrite each other when
+they handle the same reservation at the same moment, which needs real row locks. Three check
+the exclusion constraint that stops two showtimes overlapping in one hall:
 
 ```bash
 TEST_DB=postgres POSTGRES_HOST=localhost POSTGRES_PASSWORD=... python manage.py test --settings=root.settings_test
@@ -140,8 +142,6 @@ including HTTPS, backups and updates, is in [DEPLOY.md](DEPLOY.md).
 - **Late payments are refunded by hand.** A payment that arrives after the 10-minute hold
   has expired is logged for a manual refund instead of being refunded automatically
   ([#8](https://github.com/sanjarbek-ashurboyev/Cinevault/issues/8)).
-- **Showtimes are not checked for overlaps.** Nothing stops two showtimes being scheduled in
-  the same hall at the same time, or an end time that is before the start time.
 - **Prices are whole numbers.** Showtime prices and reservation totals have no cents
   ([#6](https://github.com/sanjarbek-ashurboyev/Cinevault/issues/6)).
 

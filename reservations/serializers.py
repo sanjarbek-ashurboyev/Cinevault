@@ -66,7 +66,7 @@ class ReservationCreateSerializer(ModelSerializer):
 
         acquired_keys = []
         for seat in seats:
-            key = seat_lock_key(showtime, seat.id)
+            key = seat_lock_key(showtime.id, seat.id)
             if cache.add(key, user.id, timeout=SEAT_LOCK_TTL):
                 acquired_keys.append(key)
             else:
