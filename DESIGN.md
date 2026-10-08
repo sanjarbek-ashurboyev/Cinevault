@@ -203,13 +203,6 @@ What's missing today:
 - **Refunds are manual.** A payment that lands after its hold expired is logged, not
   refunded. The next step is a Celery task calling `stripe.Refund.create` with an
   idempotency key (#8).
-- **Showtimes can overlap.** Nothing stops two films being scheduled in the same hall
-  at the same time. The right fix is a PostgreSQL `ExclusionConstraint` on
-  `(hall, time range)`, which makes the database refuse overlaps the same way it
-  refuses double booking.
-- **The seat-lock key uses the showtime's text label** (`str(showtime)`) instead of its
-  id. It works, but the key changes if a movie title is edited, and it contains spaces.
-  It should be `showtime.id`.
 - **Prices are whole numbers** (no cents) (#6), and there's no error monitoring yet (#9).
 
 If traffic grew by 10×, my first changes would be:
