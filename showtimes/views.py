@@ -20,7 +20,7 @@ from showtimes.serializers import SeatMapSerializer, ShowtimeSerialer
 # Create your views here.
 @extend_schema(tags=['showtimes'])
 class ShowtimesListAPIView(ListCreateAPIView):
-    queryset = Showtime.objects.all()
+    queryset = Showtime.objects.order_by('start_time', 'id')
     serializer_class = ShowtimeSerialer
     filter_backends = [DjangoFilterBackend]
     filterset_class = ShowtimeFilterset

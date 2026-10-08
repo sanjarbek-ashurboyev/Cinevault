@@ -156,13 +156,28 @@ window.CV_API = (function () {
     return s ? '?' + s : '';
   }
 
-  /* The project has no DEFAULT_PAGINATION_CLASS, so list endpoints
-     return a bare array today. Reading through `results` anyway means
-     switching pagination on later will not break every page. */
-  function rows(payload) {
-    if (Array.isArray(payload)) return payload;
-    if (payload && Array.isArray(payload.results)) return payload.results;
-    return [];
+  /* List endpoints are paginated: {count, next, previous, results}.
+     Every page here builds its view from the whole list (the catalogue
+     joins all movies to all showtimes in the browser), so stopping at
+     page one would quietly drop films. This follows the pages until
+     `next` runs out, at the server's maximum page size of 100. */
+  var PAGE_SIZE = 100;
+
+  function allPages(path, params) {
+    var query = {};
+    Object.keys(params || {}).forEach(function (k) { query[k] = params[k]; });
+    query.page_size = PAGE_SIZE;
+    var collected = [];
+
+    function fetchPage(page) {
+      query.page = page;
+      return send('GET', path + qs(query)).then(function (payload) {
+        if (Array.isArray(payload)) return payload;
+        collected = collected.concat((payload && payload.results) || []);
+        return payload && payload.next ? fetchPage(page + 1) : collected;
+      });
+    }
+    return fetchPage(1);
   }
 
 
@@ -194,13 +209,13 @@ window.CV_API = (function () {
     },
 
     /* catalogue */
-    movies: function (params) { return send('GET', '/movies/' + qs(params)).then(rows); },
+    movies: function (params) { return allPages('/movies/', params); },
     movie: function (id) { return send('GET', '/movies/' + id); },
-    genres: function () { return send('GET', '/genres/').then(rows); },
-    halls: function () { return send('GET', '/halls/').then(rows); },
+    genres: function () { return allPages('/genres/'); },
+    halls: function () { return allPages('/halls/'); },
 
     /* showtimes */
-    showtimes: function (params) { return send('GET', '/showtimes/' + qs(params)).then(rows); },
+    showtimes: function (params) { return allPages('/showtimes/', params); },
     showtime: function (id) { return send('GET', '/showtimes/' + id); },
     seatMap: function (id) { return send('GET', '/showtimes/' + id + '/seats/'); },
 
@@ -212,7 +227,7 @@ window.CV_API = (function () {
     /* The backend scopes this to the caller — get_queryset() filters by
        request.user — so there is no user id to pass and no way to ask
        for somebody else's. Newest first, decided server-side. */
-    myReservations: function () { return send('GET', '/reservations/').then(rows); },
+    myReservations: function () { return allPages('/reservations/'); },
 
     /* Owner-or-staff only. A reservation belonging to someone else
        answers 403, and a missing one 404, so callers should treat the

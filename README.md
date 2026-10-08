@@ -76,6 +76,7 @@ inside the Docker network.
 ## API overview
 
 All endpoints live under `/api/v1/`. Full docs are at `/swagger/` when running locally.
+List endpoints are paginated (`?page=`, 20 per page by default, up to 100 with `?page_size=`).
 
 | Area | Endpoints |
 |---|---|
@@ -142,7 +143,6 @@ including HTTPS, backups and updates, is in [DEPLOY.md](DEPLOY.md).
   the same hall at the same time, or an end time that is before the start time.
 - **Prices are whole numbers.** Showtime prices and reservation totals have no cents
   ([#6](https://github.com/sanjarbek-ashurboyev/Cinevault/issues/6)).
-- **List endpoints are not paginated** ([#4](https://github.com/sanjarbek-ashurboyev/Cinevault/issues/4)).
 
 ## License
 
