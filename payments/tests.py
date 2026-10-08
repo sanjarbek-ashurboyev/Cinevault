@@ -44,13 +44,101 @@ class CreatePaymentIntentTests(TestCase):
         payment = Payment.objects.get()
         self.assertEqual((payment.stripe_payment_intent_id, payment.amount, payment.status), ('pi_123', 40, 'pending'))
 
-    def test_retrying_reuses_the_payment_row(self, create):
+    def retrieve_returns(self, intent_status, amount=4000):
+        return mock.patch(
+            'payments.views.stripe.PaymentIntent.retrieve',
+            return_value=SimpleNamespace(id='pi_123', client_secret='pi_123_secret',
+                                         status=intent_status, amount=amount),
+        )
+
+    def test_reopening_checkout_reuses_the_unpaid_intent(self, create):
+        # Otherwise a customer who pays in an older tab pays an intent nobody tracks.
+        client = client_for(self.user)
+        client.post(self.url())
+
+        with self.retrieve_returns('requires_payment_method') as retrieve:
+            response = client.post(self.url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'client_secret': 'pi_123_secret'})
+        retrieve.assert_called_once_with('pi_123')
+        create.assert_called_once()
+        self.assertEqual(Payment.objects.get().stripe_payment_intent_id, 'pi_123')
+
+    def test_an_intent_needing_3d_secure_is_reused(self, create):
+        client = client_for(self.user)
+        client.post(self.url())
+
+        with self.retrieve_returns('requires_action'):
+            self.assertEqual(client.post(self.url()).data, {'client_secret': 'pi_123_secret'})
+        create.assert_called_once()
+
+    def test_a_paid_intent_is_not_replaced(self, create):
+        client = client_for(self.user)
+        client.post(self.url())
+
+        for intent_status in ('succeeded', 'processing'):
+            with self.subTest(intent_status), self.retrieve_returns(intent_status):
+                response = client.post(self.url())
+            self.assertEqual(response.status_code, 409)
+        create.assert_called_once()
+        self.assertEqual(Payment.objects.get().stripe_payment_intent_id, 'pi_123')
+
+    def test_a_cancelled_intent_is_replaced(self, create):
         client = client_for(self.user)
         client.post(self.url())
         create.return_value = SimpleNamespace(id='pi_456', client_secret='pi_456_secret')
+
+        with self.retrieve_returns('canceled'):
+            response = client.post(self.url())
+
+        self.assertEqual(response.data, {'client_secret': 'pi_456_secret'})
+        self.assertEqual(Payment.objects.get().stripe_payment_intent_id, 'pi_456')
+        self.assertEqual(
+            create.call_args.kwargs['idempotency_key'],
+            f'cinevault-reservation-{self.reservation.id}-replacing-pi_123',
+        )
+
+    def test_an_intent_for_a_different_amount_is_replaced(self, create):
+        client = client_for(self.user)
         client.post(self.url())
 
-        self.assertEqual(Payment.objects.get().stripe_payment_intent_id, 'pi_456')
+        with self.retrieve_returns('requires_payment_method', amount=999):
+            client.post(self.url())
+
+        self.assertEqual(create.call_count, 2)
+
+    def test_simultaneous_first_requests_get_the_same_idempotency_key(self, create):
+        # Stripe returns the same intent for a repeated key, so a double click makes one intent.
+        client_for(self.user).post(self.url())
+        Payment.objects.all().delete()  # as seen by a request racing the first one
+        client_for(self.user).post(self.url())
+
+        first, second = (call.kwargs['idempotency_key'] for call in create.call_args_list)
+        self.assertEqual(first, second)
+        self.assertEqual(first, f'cinevault-reservation-{self.reservation.id}-replacing-none')
+
+    def test_stripe_failure_returns_502_and_stores_nothing(self, create):
+        create.side_effect = stripe.error.APIConnectionError('network down')
+
+        with self.assertLogs('payments.views', 'ERROR'):
+            response = client_for(self.user).post(self.url())
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn('try again', response.data['detail'])
+        self.assertFalse(Payment.objects.exists())
+
+    def test_stripe_failure_while_checking_the_old_intent_returns_502(self, create):
+        client = client_for(self.user)
+        client.post(self.url())
+
+        with mock.patch('payments.views.stripe.PaymentIntent.retrieve',
+                        side_effect=stripe.error.APIConnectionError('network down')), \
+                self.assertLogs('payments.views', 'ERROR'):
+            response = client.post(self.url())
+
+        self.assertEqual(response.status_code, 502)
+        create.assert_called_once()
 
     def test_cannot_pay_for_someone_elses_reservation(self, create):
         stranger = make_user(email='stranger@example.com')
@@ -85,8 +173,9 @@ class StripeWebhookTests(TestCase):
             reservation=self.reservation, stripe_payment_intent_id='pi_123', amount=40,
         )
 
-    def deliver(self, construct_event, event_type, intent_id='pi_123'):
-        construct_event.return_value = {'type': event_type, 'data': {'object': {'id': intent_id}}}
+    def deliver(self, construct_event, event_type, intent_id='pi_123', metadata=None):
+        intent = {'id': intent_id, 'metadata': metadata or {}}
+        construct_event.return_value = {'type': event_type, 'data': {'object': intent}}
         with self.captureOnCommitCallbacks(execute=True):
             return self.client.post(WEBHOOK, b'{}', content_type='application/json',
                                     HTTP_STRIPE_SIGNATURE='t=1,v1=sig')
@@ -162,8 +251,22 @@ class StripeWebhookTests(TestCase):
         self.assertEqual(ReservationSeat.objects.count(), 2)
 
     def test_unknown_payment_intent_is_acknowledged(self, construct_event, ticket):
-        response = self.deliver(construct_event, 'payment_intent.succeeded', intent_id='pi_unknown')
+        with self.assertNoLogs('payments.views', 'ERROR'):
+            response = self.deliver(construct_event, 'payment_intent.succeeded', intent_id='pi_unknown')
         self.assertEqual(response.status_code, 200, 'Stripe would retry forever on a non-2xx')
+        ticket.delay.assert_not_called()
+
+    def test_payment_on_a_replaced_intent_is_flagged(self, construct_event, ticket):
+        # A tab opened before checkout was reopened can still pay the old intent.
+        metadata = {'reservation_id': str(self.reservation.id)}
+        with self.assertLogs('payments.views', 'ERROR') as logs:
+            response = self.deliver(construct_event, 'payment_intent.succeeded',
+                                    intent_id='pi_old', metadata=metadata)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('pi_old', logs.output[0])
+        self.refresh()
+        self.assertEqual(self.reservation.status, Reservation.StatusType.PENDING)
         ticket.delay.assert_not_called()
 
     def test_other_event_types_are_ignored(self, construct_event, ticket):

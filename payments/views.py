@@ -22,6 +22,40 @@ logger = logging.getLogger(__name__)
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+# The customer can still pay an intent in these states with its existing client_secret.
+REUSABLE_INTENT_STATUSES = {"requires_payment_method", "requires_confirmation", "requires_action"}
+# The customer has paid, or the payment is clearing; the webhook will confirm the booking.
+SETTLING_INTENT_STATUSES = {"processing", "succeeded"}
+
+
+class PaymentAlreadyMade(Exception):
+    pass
+
+
+def _reusable_intent(payment, amount_in_cents):
+    """The intent on file for this reservation, if the customer can still pay it.
+
+    Raises PaymentAlreadyMade when that intent is paid or clearing, so a second
+    tab cannot start a second charge for the same seats.
+    """
+    if payment is None or not payment.stripe_payment_intent_id:
+        return None
+    intent = stripe.PaymentIntent.retrieve(payment.stripe_payment_intent_id)
+    if intent.status in SETTLING_INTENT_STATUSES:
+        raise PaymentAlreadyMade
+    if intent.status in REUSABLE_INTENT_STATUSES and intent.amount == amount_in_cents:
+        return intent
+    return None  # cancelled by Stripe, or for a different amount
+
+
+def _idempotency_key(reservation, payment):
+    """Same key for requests racing to create the same intent, so Stripe returns one intent.
+
+    Keyed on the intent being replaced, not a counter, so concurrent requests agree on it.
+    """
+    replacing = payment.stripe_payment_intent_id if payment else "none"
+    return f"cinevault-reservation-{reservation.id}-replacing-{replacing}"
+
 @extend_schema(tags=['payments'])
 class CreatePaymentIntentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -39,16 +73,34 @@ class CreatePaymentIntentView(APIView):
             return Response({"detail": "This showtime has already started."}, status=status.HTTP_400_BAD_REQUEST)
 
         amount_in_cents = int(reservation.total_price * 100)
+        payment = Payment.objects.filter(reservation=reservation).first()
 
-        intent = stripe.PaymentIntent.create(
-            amount=amount_in_cents,
-            currency="usd",
-            metadata={"reservation_id": str(reservation.id)},
-            automatic_payment_methods={
-                "enabled": True,
-                "allow_redirects": "never",
-            },
-        )
+        # Reopening checkout used to create a fresh intent and forget the old one, so a
+        # payment made on the old one (in a second tab, say) never confirmed the booking.
+        try:
+            intent = _reusable_intent(payment, amount_in_cents)
+            if intent is None:
+                intent = stripe.PaymentIntent.create(
+                    amount=amount_in_cents,
+                    currency="usd",
+                    metadata={"reservation_id": str(reservation.id)},
+                    automatic_payment_methods={
+                        "enabled": True,
+                        "allow_redirects": "never",
+                    },
+                    idempotency_key=_idempotency_key(reservation, payment),
+                )
+        except PaymentAlreadyMade:
+            return Response(
+                {"detail": "This reservation has already been paid. Your ticket will arrive by email."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        except stripe.error.StripeError:
+            logger.exception("Stripe request failed for reservation %s", reservation.id)
+            return Response(
+                {"detail": "The payment service is unavailable. Please try again in a moment."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
         Payment.objects.update_or_create(
             reservation=reservation,
@@ -77,7 +129,16 @@ def stripe_webhook(request):
         with transaction.atomic():
             locked = _lock_payment(intent["id"])
             if locked is None:
-                return HttpResponse(status=200)  # nothing to do
+                reservation_id = (intent.get("metadata") or {}).get("reservation_id")
+                if reservation_id:
+                    # Ours, but no longer the reservation's intent on file: paid in a tab
+                    # opened before checkout was reopened (possible before intents were reused).
+                    logger.error(
+                        "Payment %s succeeded for reservation %s, but that reservation's payment "
+                        "is a different intent. Match or refund it by hand.",
+                        intent["id"], reservation_id,
+                    )
+                return HttpResponse(status=200)
             payment, reservation = locked
 
             # Stripe retries a webhook until it gets a 2xx and can deliver the

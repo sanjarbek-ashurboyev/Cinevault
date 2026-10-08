@@ -132,9 +132,6 @@ including HTTPS, backups and updates, is in [DEPLOY.md](DEPLOY.md).
 
 ## Known limitations
 
-- **Reopening checkout creates a new Stripe PaymentIntent.** The payment record keeps only
-  the latest one, so a payment made on an earlier intent (for example in a second tab) is
-  not matched to the booking. Reusing the pending intent is the planned fix.
 - **Late payments are refunded by hand.** A payment that arrives after the 10-minute hold
   has expired is logged for a manual refund instead of being refunded automatically
   ([#8](https://github.com/sanjarbek-ashurboyev/Cinevault/issues/8)).
