@@ -19,7 +19,10 @@ Payments, seat holds and emails all run through Celery and Redis.
 ## Features
 
 - **Accounts.** Registration with JWT auth, email verification by a 6-digit code stored in
-  Redis, password reset, and role-based permissions (customer, staff, superuser).
+  Redis, and password reset.
+- **Permissions.** Anyone can browse the catalogue and seat maps. Only verified users can
+  book, and users see only their own reservations (staff can view any reservation).
+  Movies, halls and showtimes are managed by superusers.
 - **Catalogue.** Movies, genres, halls and showtimes. Search movies by title and genre;
   filter showtimes by movie, hall and date.
 - **Seat reservation without double-booking.** Seats are reserved inside a database
