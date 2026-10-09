@@ -86,14 +86,15 @@ class WebhookVersusHoldExpiryTests(TransactionTestCase):
         self.payment.refresh_from_db()
         self.reservation.refresh_from_db()
 
+    @mock.patch('payments.views.refund_late_payment')
     @mock.patch('payments.views.send_reservation_ticket')
     @mock.patch('payments.views.stripe.Webhook.construct_event',
                 return_value={'type': 'payment_intent.succeeded', 'data': {'object': {'id': 'pi_123'}}})
-    def test_payment_landing_while_the_hold_expires_is_not_confirmed_without_seats(self, construct_event, ticket):
+    def test_payment_landing_while_the_hold_expires_is_not_confirmed_without_seats(self, construct_event, ticket, refund):
         def deliver_webhook():
             Client().post(WEBHOOK, b'{}', content_type='application/json', HTTP_STRIPE_SIGNATURE='t=1,v1=sig')
 
-        with self.assertLogs('payments.views', 'ERROR') as logs:
+        with self.assertLogs('payments.views', 'WARNING') as logs:
             with transaction.atomic():
                 # The expiry task has locked the reservation and is mid-cancel.
                 reservation = Reservation.objects.select_for_update().get(pk=self.reservation.pk)
@@ -106,8 +107,9 @@ class WebhookVersusHoldExpiryTests(TransactionTestCase):
         self.assertEqual(self.reservation.status, Reservation.StatusType.CANCELLED,
                          'a confirmed booking with no seats behind it is the bug')
         self.assertFalse(ReservationSeat.objects.exists())
-        self.assertEqual(self.payment.status, 'succeeded', 'the money is real, so the payment is recorded')
-        self.assertIn('refunding', logs.output[0])
+        self.assertEqual(self.payment.status, 'refunding', 'the seats are gone, so the money goes back')
+        self.assertIn('being refunded', logs.output[0])
+        refund.delay.assert_called_once_with(self.payment.pk)
         ticket.delay.assert_not_called()
 
     @mock.patch('stripe.PaymentIntent.retrieve', return_value={'status': 'requires_payment_method'})
