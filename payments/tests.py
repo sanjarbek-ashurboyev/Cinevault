@@ -1,13 +1,16 @@
 from datetime import timedelta
+from io import StringIO
 from types import SimpleNamespace
 from unittest import mock
 
 import stripe
+from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from payments.models import Payment
+from payments.tasks import refund_late_payment
 from reservations.models import Reservation, ReservationSeat
 from test_helpers import client_for, make_showtime, make_user
 
@@ -215,19 +218,6 @@ class StripeWebhookTests(TestCase):
         self.refresh()
         self.assertEqual(self.reservation.status, Reservation.StatusType.CONFIRMED)
 
-    def test_payment_after_the_hold_expired_is_flagged_for_refund(self, construct_event, ticket):
-        self.reservation.cancel()  # the 10-minute hold lapsed and the seats were released
-
-        with self.assertLogs('payments.views', 'ERROR') as logs:
-            response = self.deliver(construct_event, 'payment_intent.succeeded')
-
-        self.assertEqual(response.status_code, 200)
-        self.refresh()
-        self.assertEqual(self.payment.status, 'succeeded', 'the money is real, so the payment is recorded')
-        self.assertEqual(self.reservation.status, Reservation.StatusType.CANCELLED)
-        self.assertIn('refunding', logs.output[0])
-        ticket.delay.assert_not_called()
-
     def test_failed_payment_cancels_and_releases_seats(self, construct_event, ticket):
         response = self.deliver(construct_event, 'payment_intent.payment_failed')
 
@@ -273,3 +263,136 @@ class StripeWebhookTests(TestCase):
         self.assertEqual(self.deliver(construct_event, 'charge.refunded').status_code, 200)
         self.refresh()
         self.assertEqual(self.reservation.status, Reservation.StatusType.PENDING)
+
+
+REFUND_CREATE = 'payments.tasks.stripe.Refund.create'
+
+
+def refund(refund_id='re_123'):
+    return SimpleNamespace(id=refund_id)
+
+
+@mock.patch('payments.views.send_reservation_ticket')
+@mock.patch('payments.views.stripe.Webhook.construct_event')
+class LatePaymentRefundTests(TestCase):
+    """A payment that lands after the 10-minute hold lapsed and the seats went back on sale."""
+
+    def setUp(self):
+        self.reservation = make_reservation(make_user())
+        self.payment = Payment.objects.create(
+            reservation=self.reservation, stripe_payment_intent_id='pi_late', amount=40,
+        )
+        self.reservation.cancel()
+
+    def deliver(self, construct_event, event_type='payment_intent.succeeded'):
+        construct_event.return_value = {'type': event_type, 'data': {'object': {'id': 'pi_late', 'metadata': {}}}}
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(WEBHOOK, b'{}', content_type='application/json',
+                                        HTTP_STRIPE_SIGNATURE='t=1,v1=sig')
+        self.assertEqual(response.status_code, 200)
+        self.payment.refresh_from_db()
+
+    def run_refunds_inline(self):
+        """Run queued refund tasks in the test, the way a worker would."""
+        return mock.patch('payments.views.refund_late_payment.delay',
+                          side_effect=lambda payment_id: refund_late_payment.apply(args=[payment_id]))
+
+    def test_late_payment_is_refunded_without_a_ticket(self, construct_event, ticket):
+        with self.run_refunds_inline(), mock.patch(REFUND_CREATE, return_value=refund()) as create, \
+                self.assertLogs('payments', 'WARNING'):
+            self.deliver(construct_event)
+
+        create.assert_called_once_with(
+            payment_intent='pi_late', metadata={'reservation_id': str(self.reservation.id)},
+            idempotency_key='cinevault-refund-pi_late',
+        )
+        self.assertEqual((self.payment.status, self.payment.stripe_refund_id), ('refunded', 're_123'))
+        self.reservation.refresh_from_db()
+        self.assertEqual(self.reservation.status, Reservation.StatusType.CANCELLED)
+        ticket.delay.assert_not_called()
+
+    def test_refund_is_queued_only_after_the_webhook_commits(self, construct_event, ticket):
+        with mock.patch('payments.views.refund_late_payment') as task:
+            construct_event.return_value = {'type': 'payment_intent.succeeded',
+                                            'data': {'object': {'id': 'pi_late', 'metadata': {}}}}
+            with self.captureOnCommitCallbacks() as callbacks:
+                self.client.post(WEBHOOK, b'{}', content_type='application/json', HTTP_STRIPE_SIGNATURE='t=1,v1=sig')
+            task.delay.assert_not_called()
+            for callback in callbacks:
+                callback()
+            task.delay.assert_called_once_with(self.payment.id)
+
+    def test_duplicate_deliveries_refund_once(self, construct_event, ticket):
+        with self.run_refunds_inline(), mock.patch(REFUND_CREATE, return_value=refund()) as create:
+            self.deliver(construct_event)
+            self.deliver(construct_event)
+            # A copy of the task running late (queued twice before either finished) stops too.
+            refund_late_payment.apply(args=[self.payment.id])
+        create.assert_called_once()
+        self.assertEqual(self.payment.status, 'refunded')
+
+    def test_redelivery_requeues_a_refund_that_never_ran(self, construct_event, ticket):
+        # The first delivery committed "refunding", but queueing the task failed (say Redis
+        # was down), so the webhook answered 500 and Stripe sends the event again.
+        Payment.objects.filter(pk=self.payment.pk).update(status='refunding')
+        with self.run_refunds_inline(), mock.patch(REFUND_CREATE, return_value=refund()) as create:
+            self.deliver(construct_event)
+        create.assert_called_once()
+        self.assertEqual(self.payment.status, 'refunded')
+
+    def test_stripe_outage_is_retried_with_the_same_key(self, construct_event, ticket):
+        outage = stripe.error.APIConnectionError('Stripe is unreachable')
+        with self.run_refunds_inline(), \
+                mock.patch(REFUND_CREATE, side_effect=[outage, outage, refund('re_456')]) as create:
+            self.deliver(construct_event)
+        self.assertEqual(create.call_count, 3)
+        self.assertEqual({c.kwargs['idempotency_key'] for c in create.call_args_list}, {'cinevault-refund-pi_late'})
+        self.assertEqual((self.payment.status, self.payment.stripe_refund_id), ('refunded', 're_456'))
+
+    def test_a_refund_still_failing_after_every_retry_is_marked_not_lost(self, construct_event, ticket):
+        outage = stripe.error.APIConnectionError('Stripe is unreachable')
+        with self.run_refunds_inline(), mock.patch(REFUND_CREATE, side_effect=outage) as create, \
+                self.assertLogs('payments.tasks', 'ERROR') as logs:
+            self.deliver(construct_event)
+        self.assertEqual(create.call_count, refund_late_payment.max_retries + 1)
+        self.assertEqual(self.payment.status, 'refund_failed')
+        self.assertIn('refund_late_payments', logs.output[-1])
+
+    def test_a_charge_already_refunded_in_the_dashboard_counts_as_refunded(self, construct_event, ticket):
+        done = stripe.error.InvalidRequestError('Charge has already been refunded.', None,
+                                                code='charge_already_refunded')
+        with self.run_refunds_inline(), mock.patch(REFUND_CREATE, side_effect=done):
+            self.deliver(construct_event)
+        self.assertEqual(self.payment.status, 'refunded')
+
+    def test_a_refused_refund_is_marked_failed(self, construct_event, ticket):
+        refused = stripe.error.InvalidRequestError('No such payment_intent', None, code='resource_missing')
+        with self.run_refunds_inline(), mock.patch(REFUND_CREATE, side_effect=refused), \
+                self.assertLogs('payments.tasks', 'ERROR'):
+            self.deliver(construct_event)
+        self.assertEqual(self.payment.status, 'refund_failed')
+
+    def test_a_late_failure_event_does_not_overwrite_the_refund(self, construct_event, ticket):
+        with self.run_refunds_inline(), mock.patch(REFUND_CREATE, return_value=refund()):
+            self.deliver(construct_event)
+        self.deliver(construct_event, 'payment_intent.payment_failed')
+        self.assertEqual(self.payment.status, 'refunded')
+
+    def test_command_queues_every_late_payment_that_is_not_refunded(self, construct_event, ticket):
+        # Logged for a manual refund before refunds were automatic.
+        Payment.objects.filter(pk=self.payment.pk).update(status='succeeded')
+        stuck = Payment.objects.create(reservation=make_reservation(make_user(email='b@example.com'),
+                                                                    status=Reservation.StatusType.CANCELLED),
+                                       stripe_payment_intent_id='pi_stuck', amount=40, status='refund_failed')
+        Payment.objects.create(reservation=make_reservation(make_user(email='c@example.com'),
+                                                              status=Reservation.StatusType.CONFIRMED),
+                               stripe_payment_intent_id='pi_paid', amount=40, status='succeeded')
+
+        with mock.patch('payments.management.commands.refund_late_payments.refund_late_payment') as task:
+            call_command('refund_late_payments', stdout=StringIO())
+
+        self.assertEqual(sorted(c.args[0] for c in task.delay.call_args_list), sorted([self.payment.id, stuck.id]))
+        self.assertEqual(
+            dict(Payment.objects.values_list('stripe_payment_intent_id', 'status')),
+            {'pi_late': 'refunding', 'pi_stuck': 'refunding', 'pi_paid': 'succeeded'},
+        )

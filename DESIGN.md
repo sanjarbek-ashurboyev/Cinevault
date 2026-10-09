@@ -100,9 +100,9 @@ Three choices here:
   asks first, then locks and re-reads the status, because the webhook may have landed
   during that Stripe call.
 - **A payment that arrives after the seats were released isn't forced through.** The
-  payment row is still marked `succeeded`, because the money is real, but the
-  reservation stays cancelled and the case is logged for a refund. Confirming it would
-  give the customer a ticket for seats that may already belong to someone else.
+  reservation stays cancelled and the payment is marked `refunding`; a Celery task
+  refunds it through Stripe. Confirming it would give the customer a ticket for seats
+  that may already belong to someone else.
 
 The two tests in `payments/test_concurrency.py` exercise this for real. One transaction
 holds the lock, the other side runs in a thread, and the test waits until Postgres
@@ -200,9 +200,6 @@ internet ─► Caddy (TLS) ─► nginx (static files, /media, proxy) ─► gu
 
 What's missing today:
 
-- **Refunds are manual.** A payment that lands after its hold expired is logged, not
-  refunded. The next step is a Celery task calling `stripe.Refund.create` with an
-  idempotency key (#8).
 - **Prices are whole numbers** (no cents) (#6), and there's no error monitoring yet (#9).
 
 If traffic grew by 10×, my first changes would be:
@@ -215,5 +212,5 @@ If traffic grew by 10×, my first changes would be:
    visit. Caching those responses for a minute, and clearing the cache when an admin
    edits them, would take most of the read load off Postgres.
 3. **Add monitoring before adding servers.** Error tracking, plus a metric for "payments
-   logged for manual refund", would show what actually breaks under load before I start
+   whose refund failed", would show what actually breaks under load before I start
    guessing.

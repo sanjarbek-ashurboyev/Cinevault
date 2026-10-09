@@ -16,6 +16,7 @@ from reservations.models import Reservation
 from reservations.tasks import send_reservation_ticket
 
 from .models import Payment
+from .tasks import refund_late_payment
 
 # Create your views here.
 logger = logging.getLogger(__name__)
@@ -26,6 +27,10 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 REUSABLE_INTENT_STATUSES = {"requires_payment_method", "requires_confirmation", "requires_action"}
 # The customer has paid, or the payment is clearing; the webhook will confirm the booking.
 SETTLING_INTENT_STATUSES = {"processing", "succeeded"}
+
+
+# The customer's money arrived; a late failure event must not mark these "failed".
+SETTLED_PAYMENT_STATUSES = {"succeeded", "refunding", "refunded", "refund_failed"}
 
 
 class PaymentAlreadyMade(Exception):
@@ -147,32 +152,38 @@ def stripe_webhook(request):
             # emailing a second ticket is not.
             already_handled = payment.status == "succeeded"
 
-            # The money is real whatever else happened, so the payment row is
-            # always updated. The booking is a different question: if the hold
-            # already lapsed, its seats have been released and may since have
-            # been sold to somebody else. Flipping it to CONFIRMED would hand
-            # the customer a reservation with no seats behind it, so that case
-            # is left alone and logged for a refund instead.
+            # If the hold already lapsed, its seats have been released and may
+            # since have been sold to somebody else. Flipping the booking to
+            # CONFIRMED would hand the customer a reservation with no seats
+            # behind it, so the money goes back instead.
             payable = reservation.status in (
                 Reservation.StatusType.PENDING,
                 Reservation.StatusType.CONFIRMED,
             )
 
             if not payable:
-                logger.error(
-                    "Payment %s succeeded for reservation %s, but that reservation is %s. "
-                    "Seats were already released — this needs refunding by hand.",
-                    intent["id"], reservation.id, reservation.status,
-                )
+                # A redelivered event queues the refund again unless it's done: if
+                # queueing failed last time, this is how it gets another chance.
+                # The task's idempotency key keeps it to one refund at Stripe.
+                if payment.status != "refunded":
+                    logger.warning(
+                        "Payment %s succeeded for reservation %s, but that reservation is %s. "
+                        "Seats were already released, so it is being refunded.",
+                        intent["id"], reservation.id, reservation.status,
+                    )
+                    payment.status = "refunding"
+                    payment.save(update_fields=["status"])
+                    payment_id = payment.id
+                    transaction.on_commit(lambda: refund_late_payment.delay(payment_id))
+                return HttpResponse(status=200)
 
             payment.status = "succeeded"
             payment.save(update_fields=["status"])
 
-            if payable:
-                reservation.status = Reservation.StatusType.CONFIRMED
-                reservation.save(update_fields=["status"])
+            reservation.status = Reservation.StatusType.CONFIRMED
+            reservation.save(update_fields=["status"])
 
-            if payable and not already_handled:
+            if not already_handled:
                 # Queued rather than sent inline: Stripe expects an answer
                 # within seconds and an SMTP round trip does not belong in
                 # that budget. on_commit means the worker never picks up a
@@ -194,7 +205,7 @@ def stripe_webhook(request):
             # first card can be reported after a second card already paid on
             # the same intent; cancelling then would take the seats from a
             # paying customer.
-            if payment.status == "succeeded":
+            if payment.status in SETTLED_PAYMENT_STATUSES:
                 return HttpResponse(status=200)
 
             payment.status = "failed"
