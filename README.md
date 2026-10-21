@@ -6,8 +6,6 @@ A movie reservation service: browse films and showtimes, pick seats on a live se
 pay with Stripe and get the ticket by email. The backend is a Django REST Framework API.
 Payments, seat holds and emails all run through Celery and Redis.
 
-**Live:** [cinevault.uz](https://cinevault.uz/)
-
 ![CineVault home page](docs/screenshots/home.jpg)
 
 | Seat selection | Movie page |
