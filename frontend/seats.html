@@ -70,6 +70,16 @@
 
       <p class="msg" id="seatError" hidden></p>
       <p class="rail__note" id="planNote">Every seat in this screening is the same price.</p>
+
+      <section class="pov" id="povPanel" hidden aria-label="Preview of the view from your seat">
+        <div class="pov__head">
+          <h3>View from your seat</h3>
+          <button class="pov__fs" id="povFs" type="button">⤢ Fullscreen</button>
+        </div>
+        <canvas id="povCanvas"></canvas>
+        <p class="pov__hint" id="povHint">Drag to look around</p>
+        <p class="pov__hud" id="povHud"><b>Pick a seat</b><br>and its exact view loads here</p>
+      </section>
     </section>
 
     <aside class="rail">
@@ -105,5 +115,6 @@
 
 <script src="js/main.js"></script>
 <script src="js/seats.js"></script>
+<script type="module" src="js/seatview3d.js"></script>
 </body>
 </html>
