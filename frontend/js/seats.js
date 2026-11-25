@@ -60,6 +60,7 @@
       paintPlan();
       restore();
       sync();
+      initView();
     }, function (e2) {
       CV.failed(rowsEl, e2.status === 404 ? { message: 'That screening no longer exists.' } : e2);
     });
@@ -144,6 +145,65 @@
   }
 
 
+  /* ── 3D view from the seat — progressive enhancement ─────── */
+  /* The module is an ES module loaded after this script; by the time
+     any network response arrives it has executed (or failed silently,
+     in which case window.CV_SeatView is simply absent). */
+  function initView() {
+    var V = window.CV_SeatView;
+    var panel = $('#povPanel');
+    if (!panel) return;
+    if (!V) {
+      /* The ES module and its three.js import resolve later than the
+         seat-map fetch on a fast connection — come back when it lands. */
+      document.addEventListener('cv:seatview-ready', initView, { once: true });
+      return;
+    }
+
+    var rows = 0, perRow = 0, byRowCount = {};
+    seatMap.seats.forEach(function (s) {
+      rows = Math.max(rows, s.row);
+      byRowCount[s.row] = (byRowCount[s.row] || 0) + 1;
+    });
+    Object.keys(byRowCount).forEach(function (r) {
+      perRow = Math.max(perRow, byRowCount[r]);
+    });
+    /* same aisle rule as the 2D plan, so both maps agree */
+    var aisleAfter = perRow >= 8 ? Math.ceil(perRow / 2) : 0;
+
+    var ok = V.init({
+      canvas: $('#povCanvas'),
+      hud: $('#povHud'),
+      hint: $('#povHint'),
+      seats: seatMap.seats,
+      hall: { rows: rows, perRow: perRow, aisleAfter: aisleAfter },
+      backdropUrl: API.mediaUrl(movie.backdrop)
+    });
+    if (!ok) return;               // no WebGL — panel stays hidden
+
+    viewReady = true;
+    panel.hidden = false;
+    $('#povFs').addEventListener('click', function () {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (panel.requestFullscreen) panel.requestFullscreen();
+    });
+    syncView();
+  }
+
+  /* `focus` = the seat just touched; falls back to the newest pick. */
+  function syncView(focus) {
+    if (viewReady) {
+      window.CV_SeatView.update({
+        seats: seatMap.seats,
+        selected: chosen,
+        focus: focus || chosen[chosen.length - 1] || null
+      });
+    }
+  }
+
+  var viewReady = false;
+
+
   /* ── selection ───────────────────────────────────────────── */
   rowsEl.addEventListener('click', function (e) {
     var el = e.target.closest('.seat');
@@ -153,6 +213,7 @@
 
     var id = parseInt(el.dataset.id, 10);
     var at = chosen.findIndex(function (s) { return s.id === id; });
+    var touched = null;
 
     if (at > -1) {
       chosen.splice(at, 1);
@@ -163,18 +224,20 @@
         note.textContent = 'You can book at most ' + MAX + ' seats at a time.';
         return;
       }
-      chosen.push({
+      touched = {
         id: id,
         label: el.dataset.label,
         row: parseInt(el.dataset.row, 10),
         number: parseInt(el.dataset.number, 10)
-      });
+      };
+      chosen.push(touched);
       el.classList.add('is-sel');
       el.setAttribute('aria-pressed', 'true');
     }
 
     chosen.sort(function (a, b) { return a.row - b.row || a.number - b.number; });
     sync();
+    syncView(touched);
   });
 
 
@@ -281,6 +344,7 @@
         chosen.push(s);
       });
       sync();
+      syncView();
     }, function () {});
   }
 

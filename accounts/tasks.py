@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 #
 # Mail goes through Django's backend rather than a raw smtplib call to
 # smtp.gmail.com, so host, port, TLS and credentials all come from the
-# EMAIL_* settings and swapping Gmail for a transactional provider is a
+# MAILERS setting and swapping Gmail for a transactional provider is a
 # change to .env instead of a change to this file.
 
 RETRY_BACKOFF = 10
@@ -37,7 +37,6 @@ def send_mail(self, receiver_mail, otp_code):
             message=f'code : {otp_code}',
             from_email=None,  # falls back to DEFAULT_FROM_EMAIL
             recipient_list=[receiver_mail],
-            fail_silently=False,
         )
     except Exception:
         if self.request.retries >= MAX_RETRIES:
@@ -60,7 +59,6 @@ def send_password_reset_email(self, receiver_mail, otp_code):
             message=f'Your password reset code is : {otp_code}',
             from_email=None,
             recipient_list=[receiver_mail],
-            fail_silently=False,
         )
     except Exception:
         if self.request.retries >= MAX_RETRIES:

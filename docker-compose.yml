@@ -79,7 +79,9 @@ services:
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN:?SITE_DOMAIN is required}
     volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Before a domain points at the server: CADDYFILE=Caddyfile.ip gets
+      # an HTTPS certificate for the bare IP; Caddyfile.http is plain HTTP.
+      - ./docker/${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

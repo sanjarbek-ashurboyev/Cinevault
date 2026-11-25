@@ -2,7 +2,8 @@
 
 [![Tests](https://github.com/sanjarbek-ashurboyev/Cinevault/actions/workflows/tests.yml/badge.svg)](https://github.com/sanjarbek-ashurboyev/Cinevault/actions/workflows/tests.yml)
 
-A movie reservation service: browse films and showtimes, pick seats on a live seat map,
+A movie reservation service: browse films and showtimes, pick seats on a live seat map —
+with a WebGL preview of the actual view from any seat, built from the hall's geometry —
 pay with Stripe and get the ticket by email. The backend is a Django REST Framework API.
 Payments, seat holds and emails all run through Celery and Redis.
 

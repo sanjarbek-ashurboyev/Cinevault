@@ -154,7 +154,7 @@ def send_reservation_ticket(self, reservation_id):
 
     subject = f'Your CineVault ticket — {movie.title}, {start.strftime("%a %d %b %H:%M")}'
 
-    from_email = settings.EMAIL_HOST_USER or settings.DEFAULT_FROM_EMAIL
+    from_email = settings.TICKET_FROM_EMAIL
 
     message = EmailMultiAlternatives(
         subject=subject,

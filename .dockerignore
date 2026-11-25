@@ -33,3 +33,5 @@ logs/
 Makefile
 devserver.py
 DEPLOY.md
+
+dump.rdb

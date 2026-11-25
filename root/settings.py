@@ -156,8 +156,11 @@ if not DEBUG:
 
     SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', default=True)
 
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    # Off only for a temporary plain-HTTP deploy (no domain yet): browsers
+    # drop Secure cookies over HTTP, which breaks admin login.
+    _secure_cookies = env_bool('DJANGO_SECURE_COOKIES', default=True)
+    SESSION_COOKIE_SECURE = _secure_cookies
+    CSRF_COOKIE_SECURE = _secure_cookies
 
     SECURE_HSTS_SECONDS = int(os.getenv('DJANGO_HSTS_SECONDS', '0'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('DJANGO_HSTS_INCLUDE_SUBDOMAINS')
@@ -270,15 +273,29 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 900}
 CELERY_TASK_ACKS_LATE = True
 
 # ── email ──────────────────────────────────────────────────────
-EMAIL_BACKEND = os.getenv(
-    'EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend'
-)
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', default=True)
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or '')
+# Django 6.1 deprecates the EMAIL_* settings in favour of MAILERS. The env
+# var names are unchanged, so existing .env files keep working. SMTP options
+# are only passed to the SMTP backend: other backends (console, locmem)
+# reject keyword arguments they do not know.
+_SMTP_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+_email_backend = os.getenv('EMAIL_BACKEND', _SMTP_BACKEND)
+_email_user = os.getenv('EMAIL_HOST_USER')
+MAILERS = {
+    'default': {
+        'BACKEND': _email_backend,
+        'OPTIONS': {
+            'host': os.getenv('EMAIL_HOST', 'smtp.gmail.com'),
+            'port': int(os.getenv('EMAIL_PORT', '587')),
+            'use_tls': env_bool('EMAIL_USE_TLS', default=True),
+            'username': _email_user,
+            'password': os.getenv('EMAIL_HOST_PASSWORD'),
+        } if _email_backend == _SMTP_BACKEND else {},
+    },
+}
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', _email_user or '')
+# Ticket emails go out from the SMTP login itself, as they did when this read
+# EMAIL_HOST_USER directly.
+TICKET_FROM_EMAIL = _email_user or DEFAULT_FROM_EMAIL
 
 # ── Stripe ─────────────────────────────────────────────────────
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")       # sk_test_... / sk_live_...
