@@ -78,22 +78,24 @@ production.
 
 ## Running on the server IP (no domain yet)
 
-Until a domain points at the server, serve plain HTTP on its IP:
+Until a domain points at the server, Caddy can get an HTTPS certificate
+for the bare IP. Let's Encrypt issues these only under its `shortlived`
+profile (about six days); Caddy renews them on its own. In `.env`:
 
 ```
 SITE_DOMAIN=<server-ip>
-CADDYFILE=Caddyfile.http
+CADDYFILE=Caddyfile.ip
 DJANGO_ALLOWED_HOSTS=<server-ip>
-DJANGO_CSRF_TRUSTED_ORIGINS=http://<server-ip>
-DJANGO_SECURE_COOKIES=False
-DJANGO_SECURE_SSL_REDIRECT=False
-DJANGO_HSTS_SECONDS=0
+DJANGO_CSRF_TRUSTED_ORIGINS=https://<server-ip>
 ```
 
-Everything travels unencrypted, including logins, so treat this as a
-demo setup. Stripe only accepts test keys on a non-HTTPS page. To move
-to a domain, remove `CADDYFILE` and `DJANGO_SECURE_COOKIES`, set the
-domain values below, and `docker compose up -d`.
+Check `docker compose logs caddy | grep -i certificate` after the first
+start. If issuance fails, `CADDYFILE=Caddyfile.http` serves plain HTTP
+instead; that also needs `DJANGO_SECURE_COOKIES=False` and an `http://`
+CSRF origin, and is only fit for a demo.
+
+To move to a domain, remove `CADDYFILE`, set the domain values below and
+`docker compose up -d`.
 
 ## TLS
 

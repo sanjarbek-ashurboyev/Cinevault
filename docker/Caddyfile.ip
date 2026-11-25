@@ -1,0 +1,14 @@
+# HTTPS on the server's bare IP, for running before a domain points at it.
+# Let's Encrypt issues IP certificates only under its "shortlived" profile:
+# they last about six days and Caddy renews them on its own. Naming the
+# ACME issuer explicitly matters: for an IP site Caddy otherwise falls back
+# to its internal CA, which browsers do not trust.
+{$SITE_DOMAIN} {
+	tls {
+		issuer acme {
+			dir https://acme-v02.api.letsencrypt.org/directory
+			profile shortlived
+		}
+	}
+	reverse_proxy nginx:80
+}
