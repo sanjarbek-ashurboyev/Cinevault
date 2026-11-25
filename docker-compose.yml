@@ -79,7 +79,9 @@ services:
     environment:
       SITE_DOMAIN: ${SITE_DOMAIN:?SITE_DOMAIN is required}
     volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      # CADDYFILE=Caddyfile.http serves plain HTTP on the server IP, for
+      # running before a domain is set up.
+      - ./docker/${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

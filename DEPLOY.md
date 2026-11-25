@@ -76,6 +76,25 @@ production.
    docker compose logs worker | grep ready     # celery@… ready
    ```
 
+## Running on the server IP (no domain yet)
+
+Until a domain points at the server, serve plain HTTP on its IP:
+
+```
+SITE_DOMAIN=<server-ip>
+CADDYFILE=Caddyfile.http
+DJANGO_ALLOWED_HOSTS=<server-ip>
+DJANGO_CSRF_TRUSTED_ORIGINS=http://<server-ip>
+DJANGO_SECURE_COOKIES=False
+DJANGO_SECURE_SSL_REDIRECT=False
+DJANGO_HSTS_SECONDS=0
+```
+
+Everything travels unencrypted, including logins, so treat this as a
+demo setup. Stripe only accepts test keys on a non-HTTPS page. To move
+to a domain, remove `CADDYFILE` and `DJANGO_SECURE_COOKIES`, set the
+domain values below, and `docker compose up -d`.
+
 ## TLS
 
 Caddy sits in front of nginx and is the only container with published

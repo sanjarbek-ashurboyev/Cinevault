@@ -1,0 +1,6 @@
+# Plain HTTP on any address, no certificate. For running on the server's
+# IP before a domain points at it. Switch back to the default Caddyfile
+# (unset CADDYFILE in .env) once the domain resolves.
+:80 {
+	reverse_proxy nginx:80
+}
