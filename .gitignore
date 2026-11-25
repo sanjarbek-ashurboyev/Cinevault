@@ -28,3 +28,6 @@ htmlcov/
 
 *.log
 /logs/
+
+# local Redis snapshot
+dump.rdb

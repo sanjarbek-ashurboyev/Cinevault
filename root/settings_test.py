@@ -41,7 +41,7 @@ CACHES = {
 # A local .env may turn this on for production; the test client speaks plain HTTP.
 SECURE_SSL_REDIRECT = False
 
-EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+MAILERS = {'default': {'BACKEND': 'django.core.mail.backends.locmem.EmailBackend'}}
 
 STRIPE_SECRET_KEY = 'sk_test_dummy'
 STRIPE_WEBHOOK_SECRET = 'whsec_dummy'
