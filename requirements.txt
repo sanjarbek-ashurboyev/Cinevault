@@ -10,6 +10,9 @@ psycopg[binary]==3.3.6
 django-redis==7.0.0
 redis==8.1.0
 celery==5.6.3
+# kombu's Redis transport imports it but does not declare it; gunicorn used
+# to pull it in until 26.x.
+packaging==26.3
 
 gunicorn==26.2.0
 

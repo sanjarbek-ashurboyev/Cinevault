@@ -3,6 +3,12 @@
 # they last about six days and Caddy renews them on its own. Naming the
 # ACME issuer explicitly matters: for an IP site Caddy otherwise falls back
 # to its internal CA, which browsers do not trust.
+# Browsers send no SNI when the address is a bare IP, and without one Caddy
+# has no certificate to pick and aborts the handshake.
+{
+	default_sni {$SITE_DOMAIN}
+}
+
 {$SITE_DOMAIN} {
 	tls {
 		issuer acme {
